@@ -12,7 +12,9 @@ import yaml
 HERE = pathlib.Path(__file__).parent
 F = yaml.safe_load((HERE / "facts.yaml").read_text(encoding="utf-8"))
 E = F["entity"]
-FILES = {"beacon.json": ".well-known/beacon.json", "beacon.md": "beacon.md", "llms.txt": "llms.txt", "agent.txt": "agent.txt"}
+FILES = {"beacon.json": ".well-known/beacon.json", "llms.txt": "llms.txt", "agent.txt": "agent.txt"}
+if F.get("publish_beacon_md", True):
+    FILES["beacon.md"] = "beacon.md"
 fails = []
 
 

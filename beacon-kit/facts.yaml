@@ -38,6 +38,9 @@ audiences:
 
 data_protection: "Details typed into the reservation form (name, email, interests, chosen tree, area or Eircode) are sent by the visitor's own email app to the owner and used only to reply, confirm and arrange delivery. The site uses no cookies, no analytics and no third-party fonts or scripts."
 
+# GitHub Pages serves .md as text/markdown and cannot change headers; some AI fetch tools refuse that type. beacon.json, llms.txt and agent.txt carry the same facts.
+publish_beacon_md: false
+
 agent_rules:
   may_not: ["confirm a reservation", "agree a price", "promise a delivery date or stock"]
 

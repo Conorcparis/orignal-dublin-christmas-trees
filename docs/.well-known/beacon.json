@@ -84,7 +84,6 @@
     "agent_card": null,
     "agent_card_note": "No A2A agent card is published for this business; use the human handoff.",
     "files": {
-      "beacon_md": "https://conorcparis.github.io/orignal-dublin-christmas-trees/beacon.md",
       "llms": "https://conorcparis.github.io/orignal-dublin-christmas-trees/llms.txt",
       "policy": "https://conorcparis.github.io/orignal-dublin-christmas-trees/agent.txt",
       "sitemap": "https://conorcparis.github.io/orignal-dublin-christmas-trees/sitemap.xml"

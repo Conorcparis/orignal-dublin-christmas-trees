@@ -16,6 +16,7 @@ OUT.mkdir(exist_ok=True)
 E = F["entity"]
 BASE = E["url"]
 PROFILES = F.get("profiles") or {}
+MD = F.get("publish_beacon_md", True)
 
 
 def write(name, text):
@@ -61,7 +62,7 @@ def beacon_json():
             "engage": {"human_handoff": E["human_handoff"], "reservation_form": E["reservation_form"], "agent_may_not": F["agent_rules"]["may_not"]},
             "agent_card": None,
             "agent_card_note": "No A2A agent card is published for this business; use the human handoff.",
-            "files": {"beacon_md": BASE + "beacon.md", "llms": BASE + "llms.txt", "policy": BASE + "agent.txt", "sitemap": BASE + "sitemap.xml"},
+            "files": {**({"beacon_md": BASE + "beacon.md"} if MD else {}), "llms": BASE + "llms.txt", "policy": BASE + "agent.txt", "sitemap": BASE + "sitemap.xml"},
         },
     }
     if PROFILES.get("forum_profile"):
@@ -87,14 +88,14 @@ def llms_txt():
     L += [f"- [{p['title']}]({p['url']})" + (f": {p['text']}" if p.get("text") else "") for p in F["site_pages"]["en"]]
     L += ["", "## What is offered"] + [f"- {o['name']}: {o['text']}" for o in F["offers"]]
     L += ["", "## Free"] + [f"- {x['name']}: {x['text']}" for x in F["free_features"]]
-    L += ["", "## Machine-readable", f"- beacon.json: {BASE}.well-known/beacon.json", f"- beacon.md: {BASE}beacon.md", f"- agent.txt: {BASE}agent.txt", f"- sitemap: {BASE}sitemap.xml",
+    L += ["", "## Machine-readable", f"- beacon.json: {BASE}.well-known/beacon.json", *([f"- beacon.md: {BASE}beacon.md"] if MD else []), f"- agent.txt: {BASE}agent.txt", f"- sitemap: {BASE}sitemap.xml",
           "", "## Contact", f"- {E['email']}", f"- Reservation form: {E['reservation_form']}"]
     return "\n".join(L)
 
 
 def agent_txt():
     L = [f"# {E['name']} - agent.txt", f"# Updated {F['updated']} from facts.yaml", "## Who we are", E["one_line"], "## Files",
-         f"- Beacon (context file): {BASE}.well-known/beacon.json", f"- Beacon (Markdown): {BASE}beacon.md", f"- LLM guide: {BASE}llms.txt",
+         f"- Beacon (context file): {BASE}.well-known/beacon.json", *([f"- Beacon (Markdown): {BASE}beacon.md"] if MD else []), f"- LLM guide: {BASE}llms.txt",
          "## Engage", f"- human handoff: {E['human_handoff']}", f"- reservation form: {E['reservation_form']}", "## An agent may not"] + [f"- {x}" for x in F["agent_rules"]["may_not"]]
     return "\n".join(L)
 
@@ -107,7 +108,10 @@ ld = jsonld()
 write("beacon.json", json.dumps(beacon_json(), indent=2, ensure_ascii=False))
 write("jsonld.json", json.dumps(ld, ensure_ascii=False))
 write("homepage-jsonld.html", '<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False) + "</script>")
-write("beacon.md", beacon_md())
+if MD:
+    write("beacon.md", beacon_md())
+elif (OUT / "beacon.md").exists():
+    (OUT / "beacon.md").unlink()
 write("llms.txt", llms_txt())
 write("agent.txt", agent_txt())
 write("CONFIRM.md", confirm_md())
@@ -117,6 +121,8 @@ if "--publish" in sys.argv:
     DOCS = HERE.parent / "docs"
     (DOCS / ".well-known").mkdir(parents=True, exist_ok=True)
     shutil.copy(OUT / "beacon.json", DOCS / ".well-known" / "beacon.json")
-    for n in ("beacon.md", "llms.txt", "agent.txt"):
+    for n in (("beacon.md",) if MD else ()) + ("llms.txt", "agent.txt"):
         shutil.copy(OUT / n, DOCS / n)
+    if not MD and (DOCS / "beacon.md").exists():
+        (DOCS / "beacon.md").unlink()
     print("published to", DOCS)

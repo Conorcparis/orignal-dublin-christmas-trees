@@ -64,7 +64,7 @@ test('the published beacon is exactly what the beacon kit generated', () => {
   const out = path.join(ROOT, 'beacon-kit', 'out');
   if (!fs.existsSync(out)) return;                                    // kit output is not committed; skip when absent
   assert.equal(read('.well-known/beacon.json'), fs.readFileSync(path.join(out, 'beacon.json'), 'utf8'));
-  for (const f of ['beacon.md', 'llms.txt', 'agent.txt']) assert.equal(read(f), fs.readFileSync(path.join(out, f), 'utf8'), f);
+  for (const f of ['beacon.md', 'llms.txt', 'agent.txt']) { if (!fs.existsSync(path.join(out, f))) { assert.ok(!fs.existsSync(path.join(DOCS, f)), `${f} is published but the kit did not generate it`); continue; } assert.equal(read(f), fs.readFileSync(path.join(out, f), 'utf8'), f); }
 });
 
 test('guardian tree finder: 28 boundary dates give the right tree', () => {
@@ -77,5 +77,5 @@ test('guardian tree finder: 28 boundary dates give the right tree', () => {
 });
 
 test('published claims stay out of the beacon until the owner confirms them', () => {
-  for (const f of ['.well-known/beacon.json', 'beacon.md', 'llms.txt', 'agent.txt']) assert.ok(!/1,480|20 years|civic partnership|BATCH CERTIFIED|Sustainable Forestry|zero-emission|2035/i.test(read(f)), f);
+  for (const f of ['.well-known/beacon.json', 'llms.txt', 'agent.txt']) assert.ok(!/1,480|20 years|civic partnership|BATCH CERTIFIED|Sustainable Forestry|zero-emission|2035/i.test(read(f)), f);
 });

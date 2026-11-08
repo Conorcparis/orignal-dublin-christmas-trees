@@ -10,7 +10,7 @@ Live (GitHub Pages, served from `/docs`): https://conorcparis.github.io/orignal-
 | Folder | What it is |
 |---|---|
 | `docs/` | The published site. GitHub Pages serves this folder. |
-| `beacon-kit/` | `facts.yaml` is the single source for the beacon (`beacon.json`, `beacon.md`, `llms.txt`, `agent.txt`) and the JSON-LD. Same layout as the AI Agent Brewery's kit. |
+| `beacon-kit/` | `facts.yaml` is the single source for the beacon (`beacon.json`, `llms.txt`, `agent.txt` (and `beacon.md` where the host serves it as plain text; GitHub Pages does not)) and the JSON-LD. Same layout as the AI Agent Brewery's kit. |
 | `src/` | Tailwind input and the original images (the design export's pictures, before cropping). |
 | `tests/` | `site.test.mjs` (fast checks, `npm test`) and `browser-check.py` (clicks everything in a real browser). |
 | `DESIGN.md` | The design tokens exported from the design tool. |

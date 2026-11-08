@@ -17,7 +17,6 @@ Status: Taking reservations for Christmas 2026.
 
 ## Machine-readable
 - beacon.json: https://conorcparis.github.io/orignal-dublin-christmas-trees/.well-known/beacon.json
-- beacon.md: https://conorcparis.github.io/orignal-dublin-christmas-trees/beacon.md
 - agent.txt: https://conorcparis.github.io/orignal-dublin-christmas-trees/agent.txt
 - sitemap: https://conorcparis.github.io/orignal-dublin-christmas-trees/sitemap.xml
 

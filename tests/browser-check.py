@@ -2,7 +2,8 @@ import sys
 from playwright.sync_api import sync_playwright
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else '.'
-URL = 'http://127.0.0.1:8765/'
+URL = sys.argv[2] if len(sys.argv) > 2 else 'http://127.0.0.1:8765/'
+ORIGIN = URL.split('/')[0] + '//' + URL.split('/')[2]
 res = []
 
 
@@ -24,7 +25,7 @@ with sync_playwright() as p:
     ok('no console or page errors', not errs, str(errs[:3]))
     ok('no failed or 4xx requests', not failed, str(failed[:3]))
     urls = pg.evaluate("performance.getEntriesByType('resource').map(e=>e.name)")
-    ok('no request leaves the site (no Google, no CDN)', all(u.startswith('http://127.0.0.1') for u in urls), str([u for u in urls if not u.startswith('http://127.0.0.1')][:3]))
+    ok('no request leaves the site (no Google, no CDN)', all(u.startswith(ORIGIN) for u in urls), str([u for u in urls if not u.startswith(ORIGIN)][:3]))
     fonts = pg.evaluate("Promise.all([document.fonts.load('600 40px \"Playfair Display\"'),document.fonts.load('400 16px \"Plus Jakarta Sans\"'),document.fonts.load('500 12px \"JetBrains Mono\"'),document.fonts.load('24px \"Material Symbols Outlined\"')]).then(a=>a.map(x=>x.length))")
     ok('all four self-hosted fonts load', all(n > 0 for n in fonts), str(fonts))
     ok('Ogham letters have a font (no empty boxes)', pg.evaluate("document.fonts.load('16px \"Noto Sans Ogham\"', '\\u1681').then(a=>a.length)") > 0)
