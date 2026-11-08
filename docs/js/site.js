@@ -10,10 +10,11 @@
   'use strict';
 
   var EMAIL = 'romacsweeney@gmail.com';
-  // To send reservations without the visitor's email app, put the https address of a form service here.
-  // It must accept a JSON POST ({name, email, interests, tree, area, message}) and answer 2xx. Left empty, the
-  // form opens the visitor's own email app with the request already written.
-  var FORM_ENDPOINT = '';
+  // Reservations are sent to the owner by FormSubmit (formsubmit.co), a free form-to-email service: no account and no key.
+  // The first submission makes FormSubmit email the owner once to confirm the address; submissions sent before that are held and delivered after it.
+  // If the service cannot be reached, the form falls back to opening the visitor's own email app with the request written out.
+  // Empty string = always use the email app. To switch service, change this address and the payload in sendToService() below.
+  var FORM_ENDPOINT = 'https://formsubmit.co/ajax/' + EMAIL;
 
   var TREES = [
     { name: 'Birch', irish: 'Beith', dates: 'Dec 24 – Jan 20', trait: 'New Beginnings & Renewal', ogham: 'ᚁ', desc: 'Birch pioneers new ground with resilience, inspiring those born in deep midwinter to forge paths of hope.' },
@@ -130,6 +131,17 @@
     okBox.scrollIntoView({ block: 'center' }); okBox.setAttribute('tabindex', '-1'); okBox.focus({ preventScroll: true });
   }
 
+  var ctl = null;
+  // FormSubmit AJAX: JSON in, JSON out. Fields starting with _ are its settings; "email" becomes the reply-to address.
+  function sendToService(d, interests, treeName, text) {
+    ctl = new AbortController();
+    return fetch(FORM_ENDPOINT, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, signal: ctl.signal,
+      body: JSON.stringify({ _subject: 'Tree reservation 2026: ' + d.name, _template: 'table', _captcha: 'false', name: d.name, email: d.email, interests: interests.join(', '), tree: treeName, area: d.area || '(not given)', message: text })
+    }).then(function (r) { if (!r.ok) throw new Error('status ' + r.status); return r.json(); })
+      .then(function (j) { if (!(j && (j.success === true || j.success === 'true'))) throw new Error('not accepted'); });
+  }
+
   function mailtoFor(d, text) {
     return 'mailto:' + EMAIL + '?subject=' + encodeURIComponent('Tree reservation 2026: ' + d.name) + '&body=' + encodeURIComponent(text);
   }
@@ -156,9 +168,9 @@
 
       if (!FORM_ENDPOINT) { viaEmailApp(''); return; }
       btn.disabled = true; say('Sending…');
-      var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, 10000);
-      fetch(FORM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: d.name, email: d.email, interests: interests, tree: treeName, area: d.area, message: text }), signal: ctl.signal })
-        .then(function (r) { clearTimeout(timer); btn.disabled = false; say(''); if (!r.ok) throw new Error('status ' + r.status); showDone('Go raibh maith agat!', 'Your reservation request has been received. We will email you at ' + d.email + ' to confirm.', ''); })
+      var timer = setTimeout(function () { ctl.abort(); }, 10000);
+      sendToService(d, interests, treeName, text)
+        .then(function () { clearTimeout(timer); btn.disabled = false; say(''); showDone('Go raibh maith agat!', 'Your reservation request has been received. We will email you at ' + d.email + ' to confirm.', ''); })
         .catch(function () { clearTimeout(timer); btn.disabled = false; say(''); viaEmailApp('We could not send it from this page. '); });
     });
     var copy = $('#form-copy');

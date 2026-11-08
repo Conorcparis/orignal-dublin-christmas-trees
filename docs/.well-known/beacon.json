@@ -67,7 +67,7 @@
         "Dublin, Ireland"
       ]
     },
-    "data_protection": "Details typed into the reservation form (name, email, interests, chosen tree, area or Eircode) are sent by the visitor's own email app to the owner and used only to reply, confirm and arrange delivery. The site uses no cookies, no analytics and no third-party fonts or scripts.",
+    "data_protection": "Details typed into the reservation form (name, email, interests, chosen tree, area or Eircode) are sent through the form-to-email service FormSubmit to the owner's mailbox (or, if that fails, by the visitor's own email app) and used only to reply, confirm and arrange delivery. The site uses no cookies, no analytics and no third-party fonts or scripts.",
     "proof": {
       "results": [],
       "note": "No customers, partners, certifications or awards are announced."

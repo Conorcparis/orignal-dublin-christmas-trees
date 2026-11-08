@@ -32,7 +32,7 @@ test('every local file the pages point at exists, and nothing loads from another
     const h = read(page);
     for (const m of h.matchAll(/(?:src|href)="([^"#?]+)"/g)) {
       const u = m[1];
-      if (/^(mailto:|https:\/\/www\.dataprotection\.ie)/.test(u)) continue;
+      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
       if (u.startsWith(BASE)) { assert.ok(fs.existsSync(path.join(DOCS, u.slice(BASE.length) || 'index.html')), `${page}: ${u}`); continue; }
       assert.ok(!/^https?:/.test(u), `${page} loads ${u} from outside the site`);
       assert.ok(fs.existsSync(path.join(DOCS, u === './' ? 'index.html' : u)), `${page}: missing ${u}`);

@@ -70,34 +70,65 @@ with sync_playwright() as p:
     pg.screenshot(path=OUT + '/e2e-spotlight-oak.png')
     pg.click('#tree-spotlight a[data-sponsor-tree]')
     ok('Sponsor button selects that tree in the form and ticks sponsorship', pg.input_value('#tree-sign-select') == 'oak' and pg.is_checked('input[value="Tree sponsorship"]') and not pg.is_checked('input[value="Christmas tree"]'))
-    # ---------- form
-    pg.fill('#full-name', 'Aoife Ní Cheallaigh')
-    pg.fill('#email', 'aoife@example.ie')
-    pg.fill('#eircode', 'D06 W2N8')
+    # ---------- form (the form service is intercepted: this test never sends a real email)
+    import json as _json
+    calls = []
+    mode = {'v': 'ok'}
+
+    def service(route):
+        calls.append(route.request.post_data)
+        if mode['v'] == 'ok':
+            route.fulfill(status=200, content_type='application/json', body='{"success":"true","message":"sent"}')
+        elif mode['v'] == 'rejected':
+            route.fulfill(status=200, content_type='application/json', body='{"success":"false","message":"needs activation"}')
+        elif mode['v'] == 'error':
+            route.fulfill(status=500, body='boom')
+        else:
+            route.abort()
+    pg.route('https://formsubmit.co/**', service)
+
+    def fill_valid():
+        pg.fill('#full-name', 'Aoife Ní Cheallaigh')
+        pg.fill('#email', 'aoife@example.ie')
+        pg.fill('#eircode', 'D06 W2N8')
+        pg.check('#gdpr-consent')
+
+    pg.click('#tree-spotlight a[data-sponsor-tree]')
+    fill_valid()
     pg.uncheck('input[value="Tree sponsorship"]')
-    pg.check('#gdpr-consent')
     pg.click('#order-form button[type=submit]')
-    ok('no interest ticked: friendly message, form stays', 'at least one' in pg.inner_text('#form-status') and pg.is_visible('#form-content'))
+    ok('no interest ticked: friendly message, form stays, nothing sent', 'at least one' in pg.inner_text('#form-status') and pg.is_visible('#form-content') and not calls)
     pg.check('input[value="Christmas tree"]')
     pg.check('input[value="Gift certificate"]')
     pg.click('#order-form button[type=submit]')
-    pg.wait_for_timeout(400)
-    ok('submit: success panel visible, form hidden', pg.is_visible('#form-success') and not pg.is_visible('#form-content'))
-    summ = pg.input_value('#form-summary')
-    ok('summary holds every field the visitor typed', all(x in summ for x in ['Aoife Ní Cheallaigh', 'aoife@example.ie', 'D06 W2N8', 'Christmas tree, Gift certificate', 'Oak']), summ)
-    href = pg.get_attribute('#form-mail-again', 'href')
-    ok('"Open the email again" is a mailto to the owner with subject and body', href.startswith('mailto:romacsweeney@gmail.com?subject=') and 'body=' in href, href[:80])
-    pg.click('#form-copy')
-    ok('copy button responds', pg.inner_text('#form-copy') in ('Copied', 'Press Ctrl+C'))
+    pg.wait_for_selector('#form-success:not(.hidden)')
+    ok('service accepts: "received" panel, form hidden, no email-app step', 'received' in pg.inner_text('#form-success-text') and not pg.is_visible('#form-content') and not pg.is_visible('#form-summary'))
+    sent = _json.loads(calls[0])
+    ok('one request to the service with every field the visitor typed', len(calls) == 1 and sent['name'] == 'Aoife Ní Cheallaigh' and sent['email'] == 'aoife@example.ie' and sent['area'] == 'D06 W2N8'
+       and sent['interests'] == 'Christmas tree, Gift certificate' and 'Oak' in sent['tree'] and sent['_subject'].startswith('Tree reservation 2026') and sent['_captcha'] == 'false', str(sent)[:200])
     pg.screenshot(path=OUT + '/e2e-form-done.png')
+    for label, md in [('service says "not accepted"', 'rejected'), ('service returns an error', 'error'), ('no network to the service', 'down')]:
+        mode['v'] = md
+        pg.reload(wait_until='networkidle')
+        pg.click('.zodiac-pill[data-tree="2"]')
+        fill_valid()
+        pg.click('#order-form button[type=submit]')
+        pg.wait_for_selector('#form-success:not(.hidden)')
+        summ = pg.input_value('#form-summary')
+        href = pg.get_attribute('#form-mail-again', 'href') or ''
+        ok(f'{label}: falls back to the email app with the request written out', 'One more step' in pg.inner_text('#form-success-title') and 'We could not send it' in pg.inner_text('#form-success-text')
+           and all(x in summ for x in ['Aoife Ní Cheallaigh', 'aoife@example.ie', 'D06 W2N8']) and href.startswith('mailto:romacsweeney@gmail.com?subject=') and 'body=' in href, summ[:80])
+        pg.click('#form-copy')
+        ok(f'{label}: copy button responds', pg.inner_text('#form-copy') in ('Copied', 'Press Ctrl+C'))
+    pg.screenshot(path=OUT + '/e2e-form-fallback.png')
+    mode['v'] = 'ok'
+    n = len(calls)
     pg.reload(wait_until='networkidle')
     pg.evaluate("document.querySelector('[name=website]').value='http://spam'")
-    pg.fill('#full-name', 'Bot')
-    pg.fill('#email', 'b@b.co')
-    pg.check('#gdpr-consent')
+    fill_valid()
     pg.click('#order-form button[type=submit]')
-    pg.wait_for_timeout(200)
-    ok('honeypot filled: no request summary or mail link is built', pg.input_value('#form-summary') == '')
+    pg.wait_for_timeout(300)
+    ok('honeypot filled: nothing is sent and no summary is built', len(calls) == n and pg.input_value('#form-summary') == '')
     pg.goto(URL, wait_until='networkidle')
     pg.screenshot(path=OUT + '/e2e-desktop.png', full_page=True)
     # ---------- other pages

@@ -29,9 +29,10 @@ python -m http.server 8765 --directory docs &  &&  python tests/browser-check.py
 
 ## The reservation form
 
-A static site cannot receive a form on its own. Today the form opens the visitor's email app with the request written out and the visitor presses Send;
-the page also shows the text so it can be copied. To receive reservations without that step, put a form service's https address in `FORM_ENDPOINT` at the top of `docs/js/site.js`
-(it must accept a JSON POST and answer 2xx). If the service is down the page falls back to the email app. Update `docs/privacy.html` to name the service.
+A static site cannot receive a form on its own, so the form posts to [FormSubmit](https://formsubmit.co) (free, no account), which emails the owner. The first submission makes FormSubmit email the owner once to confirm the address; submissions sent before that are held and delivered after it.
+If the service cannot be reached or does not accept the request, the page opens the visitor's own email app with the request written out (and shows the text to copy), so nothing is lost.
+The service is one line, `FORM_ENDPOINT`, plus `sendToService()` in `docs/js/site.js`; change both to use another service and update `docs/privacy.html` to name it. FormSubmit publishes no operator or data-processing terms, which matters for GDPR (see `confirm:` in `beacon-kit/facts.yaml`).
+The browser check intercepts the service, so running the tests never sends a real email.
 
 ## Before this goes public properly (see `beacon-kit/facts.yaml`, `confirm:`)
 

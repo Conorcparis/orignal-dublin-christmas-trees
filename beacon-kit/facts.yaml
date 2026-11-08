@@ -36,7 +36,7 @@ audiences:
   buyers: "Households in Dublin buying a Christmas tree, people giving a tree as a gift, and businesses ordering trees."
   regions: ["Dublin, Ireland"]
 
-data_protection: "Details typed into the reservation form (name, email, interests, chosen tree, area or Eircode) are sent by the visitor's own email app to the owner and used only to reply, confirm and arrange delivery. The site uses no cookies, no analytics and no third-party fonts or scripts."
+data_protection: "Details typed into the reservation form (name, email, interests, chosen tree, area or Eircode) are sent through the form-to-email service FormSubmit to the owner's mailbox (or, if that fails, by the visitor's own email app) and used only to reply, confirm and arrange delivery. The site uses no cookies, no analytics and no third-party fonts or scripts."
 
 # GitHub Pages serves .md as text/markdown and cannot change headers; some AI fetch tools refuse that type. beacon.json, llms.txt and agent.txt carry the same facts.
 publish_beacon_md: false
@@ -61,5 +61,5 @@ confirm:
   - "Prices, stock, delivery areas and delivery dates: none are published on the site."
   - "Pictures: the hero and woodland pictures come from the design tool and are illustrative. Replace them with real photographs of the trees and the planting site."
   - "Where the site lives: the GitHub Pages address is temporary. A beacon is read at the domain root (/.well-known/beacon.json), so registering it on the Digital Forum needs its own domain."
-  - "Form delivery: the form opens the visitor's email app. Decide whether to connect a form service so enquiries arrive without the visitor pressing Send."
+  - "Form service: reservations go through FormSubmit (free, no account). The owner must click the confirmation email FormSubmit sends on the first submission. FormSubmit publishes no operator, location or data-processing terms, so a GDPR data-processing agreement is not available: decide whether that is acceptable, or switch to a service that states one (the address is one line in docs/js/site.js)."
   - "Digital Forum registration: profile, attestation, verification token and feed URLs are issued by the Forum on registration; add them under profiles: then."
