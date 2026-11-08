@@ -1,0 +1,93 @@
+{
+  "beacon_version": "3.0",
+  "updated": "2026-11-08",
+  "spec": "Beacon v3: facts only, no directives. A schema.org core plus a beacon block for Forum and engagement data.",
+  "context": {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://conorcparis.github.io/orignal-dublin-christmas-trees/#org",
+    "name": "The Original Dublin Christmas Trees",
+    "description": "Reserve a Christmas tree in Dublin. For every tree bought, a native Irish tree is planted. A Christmas tree seller serving Dublin, Ireland.",
+    "url": "https://conorcparis.github.io/orignal-dublin-christmas-trees/",
+    "logo": "https://conorcparis.github.io/orignal-dublin-christmas-trees/images/icon-512.png",
+    "email": "romacsweeney@gmail.com",
+    "areaServed": {
+      "@type": "AdministrativeArea",
+      "name": "Dublin, Ireland"
+    },
+    "knowsLanguage": [
+      "en-IE"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "email": "romacsweeney@gmail.com",
+      "areaServed": "IE",
+      "availableLanguage": [
+        "English"
+      ]
+    }
+  },
+  "beacon": {
+    "name": "The Original Dublin Christmas Trees",
+    "disambiguation": "A Christmas tree seller serving Dublin, Ireland.",
+    "status": "Taking reservations for Christmas 2026.",
+    "promises": [
+      "The owner confirms each reservation by email.",
+      "For every Christmas tree purchased, a native Irish tree is planted."
+    ],
+    "offers": [
+      {
+        "id": "christmas-tree",
+        "name": "Christmas tree",
+        "text": "A Christmas tree reserved through the form on the website and delivered in Dublin."
+      },
+      {
+        "id": "tree-sponsorship",
+        "name": "Tree sponsorship",
+        "text": "Sponsor a native Irish tree, optionally in honour of someone, with a certificate."
+      },
+      {
+        "id": "gift-certificate",
+        "name": "Gift certificate",
+        "text": "A tree sponsorship given as a gift."
+      }
+    ],
+    "free_features": [
+      {
+        "id": "guardian-tree-finder",
+        "name": "Guardian tree finder",
+        "text": "Enter a birth month and day to find the matching tree from the 13 trees of the Celtic tree calendar. A cultural feature, not a scientific claim.",
+        "url": "https://conorcparis.github.io/orignal-dublin-christmas-trees/#circle-of-life"
+      }
+    ],
+    "audiences": {
+      "buyers": "Households in Dublin buying a Christmas tree, people giving a tree as a gift, and businesses ordering trees.",
+      "regions": [
+        "Dublin, Ireland"
+      ]
+    },
+    "data_protection": "Details typed into the reservation form (name, email, interests, chosen tree, area or Eircode) are sent by the visitor's own email app to the owner and used only to reply, confirm and arrange delivery. The site uses no cookies, no analytics and no third-party fonts or scripts.",
+    "proof": {
+      "results": [],
+      "note": "No customers, partners, certifications or awards are announced."
+    },
+    "engage": {
+      "human_handoff": "mailto:romacsweeney@gmail.com",
+      "reservation_form": "https://conorcparis.github.io/orignal-dublin-christmas-trees/#signup-form",
+      "agent_may_not": [
+        "confirm a reservation",
+        "agree a price",
+        "promise a delivery date or stock"
+      ]
+    },
+    "agent_card": null,
+    "agent_card_note": "No A2A agent card is published for this business; use the human handoff.",
+    "files": {
+      "beacon_md": "https://conorcparis.github.io/orignal-dublin-christmas-trees/beacon.md",
+      "llms": "https://conorcparis.github.io/orignal-dublin-christmas-trees/llms.txt",
+      "policy": "https://conorcparis.github.io/orignal-dublin-christmas-trees/agent.txt",
+      "sitemap": "https://conorcparis.github.io/orignal-dublin-christmas-trees/sitemap.xml"
+    }
+  }
+}

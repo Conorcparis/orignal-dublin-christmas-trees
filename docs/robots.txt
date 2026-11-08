@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://conorcparis.github.io/orignal-dublin-christmas-trees/sitemap.xml

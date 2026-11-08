@@ -1,0 +1,62 @@
+# facts.yaml: the single source of truth for The Original Dublin Christmas Trees beacon.
+# Every public machine-readable file is generated from this file (python build.py). Edit here only.
+# Same layout and rules as the AI Agent Brewery's beacon kit (schema 3.0): facts only, no instructions to AI models.
+# Anything the owner has not confirmed is listed under confirm: at the bottom and is NOT published.
+
+schema_version: "3.0"
+updated: "2026-11-08"
+
+entity:
+  id: "https://conorcparis.github.io/orignal-dublin-christmas-trees/#org"
+  name: "The Original Dublin Christmas Trees"
+  url: "https://conorcparis.github.io/orignal-dublin-christmas-trees/"
+  disambiguation: "A Christmas tree seller serving Dublin, Ireland."
+  one_line: "Reserve a Christmas tree in Dublin. For every tree bought, a native Irish tree is planted."
+  location: "Dublin, Ireland"
+  languages: ["en-IE"]
+  email: "romacsweeney@gmail.com"
+  human_handoff: "mailto:romacsweeney@gmail.com"
+  reservation_form: "https://conorcparis.github.io/orignal-dublin-christmas-trees/#signup-form"
+  logo: "https://conorcparis.github.io/orignal-dublin-christmas-trees/images/icon-512.png"
+  status: "Taking reservations for Christmas 2026."
+
+promises:
+  - "The owner confirms each reservation by email."
+  - "For every Christmas tree purchased, a native Irish tree is planted."
+
+offers:
+  - {id: "christmas-tree", name: "Christmas tree", text: "A Christmas tree reserved through the form on the website and delivered in Dublin."}
+  - {id: "tree-sponsorship", name: "Tree sponsorship", text: "Sponsor a native Irish tree, optionally in honour of someone, with a certificate."}
+  - {id: "gift-certificate", name: "Gift certificate", text: "A tree sponsorship given as a gift."}
+
+free_features:
+  - {id: "guardian-tree-finder", name: "Guardian tree finder", text: "Enter a birth month and day to find the matching tree from the 13 trees of the Celtic tree calendar. A cultural feature, not a scientific claim.", url: "https://conorcparis.github.io/orignal-dublin-christmas-trees/#circle-of-life"}
+
+audiences:
+  buyers: "Households in Dublin buying a Christmas tree, people giving a tree as a gift, and businesses ordering trees."
+  regions: ["Dublin, Ireland"]
+
+data_protection: "Details typed into the reservation form (name, email, interests, chosen tree, area or Eircode) are sent by the visitor's own email app to the owner and used only to reply, confirm and arrange delivery. The site uses no cookies, no analytics and no third-party fonts or scripts."
+
+agent_rules:
+  may_not: ["confirm a reservation", "agree a price", "promise a delivery date or stock"]
+
+site_pages:
+  en:
+    - {title: "Home: how it works, sponsorship, guardian tree finder and reservation form", url: "https://conorcparis.github.io/orignal-dublin-christmas-trees/", text: "Reserve a Christmas tree in Dublin, sponsor a native tree or find your guardian tree."}
+    - {title: "Privacy notice", url: "https://conorcparis.github.io/orignal-dublin-christmas-trees/privacy.html"}
+
+# Not published until the owner confirms each one (each is written on the website today and needs evidence or a decision).
+confirm:
+  - "Trading identity: the legal or trading name, postal address and, if a company, registration number. Irish and EU rules require a seller to show these on the site."
+  - "Counts and track record: '1,480+ native saplings sown' (hero) and '20 years of Christmas tree deliveries' (footer)."
+  - "Partnership and badge: 'Dublin City & County Native Woodland Initiative', 'delivered under civic partnership' and use of the Dublin City shield. Is there written permission or a partnership with Dublin City Council?"
+  - "Certification: 'BATCH CERTIFIED 2024' and 'Sustainable Forestry Ireland'. Which body certified what, and is it current?"
+  - "Planting site claims: 'Co. Wicklow protected reserve', 'rewilding corridor active through 2035', '100-year protective trust', '100% zero peat forestry', GPS coordinates on the certificate."
+  - "Service claims: 'Dublin Metro free delivery', 'zero-emission drop-offs', deliveries starting the last week of November, 'Zero-Drop Guarantee', annual canopy growth reports, parchment certificate on recycled linen."
+  - "Tree varieties: 'Nordmann Fir or Fraser Fir' and 'hand-cut' (what is actually sold this year)."
+  - "Prices, stock, delivery areas and delivery dates: none are published on the site."
+  - "Pictures: the hero and woodland pictures come from the design tool and are illustrative. Replace them with real photographs of the trees and the planting site."
+  - "Where the site lives: the GitHub Pages address is temporary. A beacon is read at the domain root (/.well-known/beacon.json), so registering it on the Digital Forum needs its own domain."
+  - "Form delivery: the form opens the visitor's email app. Decide whether to connect a form service so enquiries arrive without the visitor pressing Send."
+  - "Digital Forum registration: profile, attestation, verification token and feed URLs are issued by the Forum on registration; add them under profiles: then."

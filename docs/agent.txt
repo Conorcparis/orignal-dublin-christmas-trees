@@ -1,0 +1,15 @@
+# The Original Dublin Christmas Trees - agent.txt
+# Updated 2026-11-08 from facts.yaml
+## Who we are
+Reserve a Christmas tree in Dublin. For every tree bought, a native Irish tree is planted.
+## Files
+- Beacon (context file): https://conorcparis.github.io/orignal-dublin-christmas-trees/.well-known/beacon.json
+- Beacon (Markdown): https://conorcparis.github.io/orignal-dublin-christmas-trees/beacon.md
+- LLM guide: https://conorcparis.github.io/orignal-dublin-christmas-trees/llms.txt
+## Engage
+- human handoff: mailto:romacsweeney@gmail.com
+- reservation form: https://conorcparis.github.io/orignal-dublin-christmas-trees/#signup-form
+## An agent may not
+- confirm a reservation
+- agree a price
+- promise a delivery date or stock

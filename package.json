@@ -1,0 +1,13 @@
+{
+  "name": "original-dublin-christmas-trees",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static site for The Original Dublin Christmas Trees. Plain HTML, one compiled stylesheet, one script. No server code.",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i src/input.css -o docs/css/site.css --minify",
+    "test": "node tests/site.test.mjs"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}
