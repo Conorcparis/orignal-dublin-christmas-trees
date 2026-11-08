@@ -17,8 +17,13 @@ entity:
   email: "romacsweeney@gmail.com"
   human_handoff: "mailto:romacsweeney@gmail.com"
   reservation_form: "https://conorcparis.github.io/orignal-dublin-christmas-trees/#signup-form"
-  logo: "https://conorcparis.github.io/orignal-dublin-christmas-trees/images/icon-512.png"
+  logo: "https://conorcparis.github.io/orignal-dublin-christmas-trees/images/logo-512.png"
   status: "Taking reservations for Christmas 2026."
+
+profiles:
+  dublin_landscaping_website: "https://www.dublinlandscaping.ie/"
+  facebook: "https://www.facebook.com/p/Dublin-Landscaping-100063761152359/"
+  instagram: "https://www.instagram.com/dublinlandscaping/"
 
 promises:
   - "The owner confirms each reservation by email."
@@ -51,6 +56,7 @@ site_pages:
 
 # Not published until the owner confirms each one (each is written on the website today and needs evidence or a decision).
 confirm:
+  - "Relationship to Dublin Landscaping (Bray, Co. Wicklow, trading since 2006 per its website): the site links to its website, Facebook and Instagram. Confirm it is the same business or owner. If so, add its phone (0861620729 / 01 4412200) and address here, which also settles the trading-identity item below. Note this site publishes romacsweeney@gmail.com while Dublin Landscaping publishes dublinlandscaping@gmail.com: which one should customers use?"
   - "Trading identity: the legal or trading name, postal address and, if a company, registration number. Irish and EU rules require a seller to show these on the site."
   - "Counts and track record: '1,480+ native saplings sown' (hero) and '20 years of Christmas tree deliveries' (footer)."
   - "Partnership and badge: 'Dublin City & County Native Woodland Initiative', 'delivered under civic partnership' and use of the Dublin City shield. Is there written permission or a partnership with Dublin City Council?"

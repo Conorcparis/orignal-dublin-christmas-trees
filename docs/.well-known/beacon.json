@@ -9,7 +9,7 @@
     "name": "The Original Dublin Christmas Trees",
     "description": "Reserve a Christmas tree in Dublin. For every tree bought, a native Irish tree is planted. A Christmas tree seller serving Dublin, Ireland.",
     "url": "https://conorcparis.github.io/orignal-dublin-christmas-trees/",
-    "logo": "https://conorcparis.github.io/orignal-dublin-christmas-trees/images/icon-512.png",
+    "logo": "https://conorcparis.github.io/orignal-dublin-christmas-trees/images/logo-512.png",
     "email": "romacsweeney@gmail.com",
     "areaServed": {
       "@type": "AdministrativeArea",
@@ -26,7 +26,12 @@
       "availableLanguage": [
         "English"
       ]
-    }
+    },
+    "sameAs": [
+      "https://www.dublinlandscaping.ie/",
+      "https://www.facebook.com/p/Dublin-Landscaping-100063761152359/",
+      "https://www.instagram.com/dublinlandscaping/"
+    ]
   },
   "beacon": {
     "name": "The Original Dublin Christmas Trees",
@@ -68,6 +73,11 @@
       ]
     },
     "data_protection": "Details typed into the reservation form (name, email, interests, chosen tree, area or Eircode) are sent through the form-to-email service FormSubmit to the owner's mailbox (or, if that fails, by the visitor's own email app) and used only to reply, confirm and arrange delivery. The site uses no cookies, no analytics and no third-party fonts or scripts.",
+    "profiles": {
+      "dublin_landscaping_website": "https://www.dublinlandscaping.ie/",
+      "facebook": "https://www.facebook.com/p/Dublin-Landscaping-100063761152359/",
+      "instagram": "https://www.instagram.com/dublinlandscaping/"
+    },
     "proof": {
       "results": [],
       "note": "No customers, partners, certifications or awards are announced."

@@ -137,18 +137,36 @@
   document.addEventListener('click', function (e) {
     var a = e.target.closest ? e.target.closest('[data-sponsor-tree]') : null; if (!a || !treeSel) return;
     treeSel.value = TREES[+a.dataset.sponsorTree].name.toLowerCase();
-    var boxes = $$('input[name="interest"]'); boxes.forEach(function (b) { b.checked = b.value === 'Tree sponsorship'; });
+    var boxes = $$('input[name="interest"]'); boxes.forEach(function (b) { b.checked = b.value === 'Tree sponsorship'; }); if (typeof syncCert === 'function') syncCert();
   });
 
   /* ---------- 4: reservation form ---------- */
   var form = $('#order-form'), formBox = $('#form-content'), okBox = $('#form-success'), status = $('#form-status');
+  var certBox = $('#cert-fields');
+  // The certificate details (who it is for, who it is from, a message) are asked only when sponsorship or a gift is ticked.
+  function wantsCert() { return !!$$('input[name="interest"]:checked').filter(function (b) { return b.value !== 'Christmas tree'; }).length; }
+  function syncCert() {
+    if (!certBox) return;
+    var on = wantsCert(); certBox.classList.toggle('hidden', !on);
+    $('#cert-name').required = on;
+  }
+  function certDetails() {
+    if (!certBox || certBox.classList.contains('hidden')) return {};
+    var o = { cert_name: $('#cert-name').value.trim() }, f = $('#cert-from').value.trim(), m = $('#cert-message').value.trim();
+    if (f) o.cert_from = f; if (m) o.cert_message = m; return o;
+  }
+  function certText(c) {
+    if (!c || !c.cert_name) return '';
+    return '\n\nCertificate / gift card details\nName on it: ' + c.cert_name + (c.cert_from ? '\nFrom: ' + c.cert_from : '') + (c.cert_message ? '\nMessage: ' + c.cert_message : '');
+  }
+  $$('input[name="interest"]').forEach(function (b) { b.addEventListener('change', syncCert); });
   function say(msg) { if (status) status.textContent = msg || ''; }
 
   function showDone(title, text, details) {
     formBox.classList.add('hidden'); okBox.classList.remove('hidden');
     $('#form-success-title').textContent = title; $('#form-success-text').textContent = text;
     var box = $('#form-summary'); box.value = details; box.classList.toggle('hidden', !details);
-    $('#form-copy').classList.toggle('hidden', !details); $('#form-mail-again').classList.toggle('hidden', !details);
+    ['#form-copy', '#form-gmail', '#form-outlook', '#form-mail-again'].forEach(function (id) { $(id).classList.toggle('hidden', !details); });
     okBox.scrollIntoView({ block: 'center' }); okBox.setAttribute('tabindex', '-1'); okBox.focus({ preventScroll: true });
   }
 
@@ -158,9 +176,13 @@
     ctl = new AbortController();
     return fetch(FORM_ENDPOINT, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, signal: ctl.signal,
-      body: JSON.stringify({ _subject: 'Tree reservation 2026: ' + d.name, _template: 'table', _captcha: 'false', name: d.name, email: d.email, interests: interests.join(', '), tree: treeName, area: d.area || '(not given)', message: text })
+      body: JSON.stringify(Object.assign({ _subject: 'Tree reservation 2026: ' + d.name, _template: 'table', _captcha: 'false', name: d.name, email: d.email, interests: interests.join(', '), tree: treeName, area: d.area || '(not given)' }, d.cert, { message: text }))
     }).then(function (r) { if (!r.ok) throw new Error('status ' + r.status); return r.json(); })
-      .then(function (j) { if (!(j && (j.success === true || j.success === 'true'))) throw new Error('not accepted'); });
+      .then(function (j) {
+        if (j && (j.success === true || j.success === 'true')) return;
+        if (j && /activation/i.test(String(j.message || ''))) return;   // first ever submission: FormSubmit holds it until the owner confirms its one-time email, then delivers it
+        throw new Error('not accepted');
+      });
   }
 
   function mailtoFor(d, text) {
@@ -174,16 +196,18 @@
       var interests = $$('input[name="interest"]:checked').map(function (b) { return b.value; });
       if (!interests.length) { say('Please tick at least one thing you are interested in.'); var first = $('input[name="interest"]'); if (first) first.focus(); return; }
       var treeName = treeSel.options[treeSel.selectedIndex].text;
-      var d = { name: form.elements.name.value.trim(), email: form.elements.email.value.trim(), interests: interests, tree: treeName, area: form.elements.area.value.trim() };
+      var d = { name: form.elements.name.value.trim(), email: form.elements.email.value.trim(), interests: interests, tree: treeName, area: form.elements.area.value.trim(), cert: certDetails() };
       var text = 'Tree reservation request from the website\n\nName: ' + d.name + '\nEmail: ' + d.email + '\nInterested in: ' + interests.join(', ') +
-        '\nCircle of Life tree: ' + treeName + '\nDublin area or Eircode: ' + (d.area || '(not given)') +
+        '\nCircle of Life tree: ' + treeName + '\nDublin area or Eircode: ' + (d.area || '(not given)') + certText(d.cert) +
         '\n\nThe sender agreed to be contacted about tree delivery and woodland certification.\nSent: ' + new Date().toISOString();
       var btn = form.querySelector('button[type="submit"]');
 
       function viaEmailApp(prefix) {
-        var link = mailtoFor(d, text);
+        var link = mailtoFor(d, text), subj = 'Tree reservation 2026: ' + d.name;
         $('#form-mail-again').setAttribute('href', link);
-        showDone('One more step: send the email', (prefix || '') + 'Your email app should open with your request already written. Press Send to complete it. If nothing opened, copy the text below and email it to ' + EMAIL + '.', text);
+        $('#form-gmail').setAttribute('href', 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(EMAIL) + '&su=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text));
+        $('#form-outlook').setAttribute('href', 'https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(EMAIL) + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text));
+        showDone('One more step: send the email', (prefix || '') + 'Your request is written out below. Send it with Gmail or Outlook, or with your computer\'s email app, whichever you use. Or copy the text and email it to ' + EMAIL + '.', text);
         window.location.href = link;
       }
 

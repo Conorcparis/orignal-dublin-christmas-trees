@@ -35,7 +35,7 @@ with sync_playwright() as p:
     imgs = pg.evaluate("[...document.images].map(i=>({src:i.getAttribute('src'),ok:i.complete&&i.naturalWidth>0,alt:i.getAttribute('alt')}))")
     ok('every image loads', all(i['ok'] for i in imgs), str([i['src'] for i in imgs if not i['ok']]))
     ok('every image has an alt attribute', all(i['alt'] is not None for i in imgs))
-    ok('photos have descriptive alt text; crest is decorative (empty alt, brand name beside it)', all(len(i['alt']) > 15 for i in imgs if 'crest' not in i['src']) and all(i['alt'] == '' for i in imgs if 'crest' in i['src']), str(imgs))
+    ok('photos have descriptive alt text; the logo is decorative (empty alt, brand name beside it)', all(len(i['alt']) > 15 for i in imgs if 'logo' not in i['src']) and all(i['alt'] == '' for i in imgs if 'logo' in i['src']), str(imgs))
     ok('icons render as glyphs, not words', pg.evaluate("[...document.querySelectorAll('.material-symbols-outlined')].every(e=>e.getBoundingClientRect().width<60)"))
     bad = pg.evaluate("[...document.querySelectorAll('a[href^=\"#\"]')].filter(a=>a.getAttribute('href').length>1&&!document.querySelector(a.getAttribute('href'))).map(a=>a.getAttribute('href'))")
     ok('every in-page link has a target', not bad, str(bad))
@@ -118,8 +118,10 @@ with sync_playwright() as p:
         calls.append(route.request.post_data)
         if mode['v'] == 'ok':
             route.fulfill(status=200, content_type='application/json', body='{"success":"true","message":"sent"}')
+        elif mode['v'] == 'activation':
+            route.fulfill(status=200, content_type='application/json', body='{"success":"false","message":"This form needs Activation. We\'ve sent you an email containing an Activate Form link."}')
         elif mode['v'] == 'rejected':
-            route.fulfill(status=200, content_type='application/json', body='{"success":"false","message":"needs activation"}')
+            route.fulfill(status=200, content_type='application/json', body='{"success":"false","message":"Submission rejected as spam."}')
         elif mode['v'] == 'error':
             route.fulfill(status=500, body='boom')
         else:
@@ -131,21 +133,44 @@ with sync_playwright() as p:
         pg.fill('#email', 'aoife@example.ie')
         pg.fill('#eircode', 'D06 W2N8')
         pg.check('#gdpr-consent')
+        if pg.is_visible('#cert-fields'):
+            pg.fill('#cert-name', 'Maeve Murphy')
+            pg.fill('#cert-from', 'The Murphy family')
+            pg.fill('#cert-message', 'Merry Christmas')
 
     pg.click('#tree-spotlight a[data-sponsor-tree]')
+    ok('sponsor button shows the certificate fields', pg.is_visible('#cert-fields'))
     fill_valid()
     pg.uncheck('input[value="Tree sponsorship"]')
+    ok('certificate fields hide again when only a Christmas tree is wanted', not pg.is_visible('#cert-fields'))
     pg.click('#order-form button[type=submit]')
     ok('no interest ticked: friendly message, form stays, nothing sent', 'at least one' in pg.inner_text('#form-status') and pg.is_visible('#form-content') and not calls)
     pg.check('input[value="Christmas tree"]')
     pg.check('input[value="Gift certificate"]')
+    ok('gift certificate shows the certificate fields', pg.is_visible('#cert-fields'))
+    pg.fill('#cert-name', '')
+    pg.click('#order-form button[type=submit]')
+    pg.wait_for_timeout(250)
+    ok('certificate name is required: submit is blocked and nothing is sent', pg.is_visible('#form-content') and not calls)
+    pg.fill('#cert-name', 'Maeve Murphy')
+    pg.fill('#cert-from', 'The Murphy family')
+    pg.fill('#cert-message', 'Merry Christmas')
     pg.click('#order-form button[type=submit]')
     pg.wait_for_selector('#form-success:not(.hidden)')
     ok('service accepts: "received" panel, form hidden, no email-app step', 'received' in pg.inner_text('#form-success-text') and not pg.is_visible('#form-content') and not pg.is_visible('#form-summary'))
     sent = _json.loads(calls[0])
     ok('one request to the service with every field the visitor typed', len(calls) == 1 and sent['name'] == 'Aoife Ní Cheallaigh' and sent['email'] == 'aoife@example.ie' and sent['area'] == 'D06 W2N8'
        and sent['interests'] == 'Christmas tree, Gift certificate' and 'Oak' in sent['tree'] and sent['_subject'].startswith('Tree reservation 2026') and sent['_captcha'] == 'false', str(sent)[:200])
+    ok('the request carries the certificate details the client typed', sent.get('cert_name') == 'Maeve Murphy' and sent.get('cert_from') == 'The Murphy family' and sent.get('cert_message') == 'Merry Christmas' and 'Maeve Murphy' in sent['message'], str(sent)[:200])
     pg.screenshot(path=OUT + '/e2e-form-done.png')
+    mode['v'] = 'activation'
+    pg.reload(wait_until='networkidle')
+    pg.click('.zodiac-pill[data-tree="2"]')
+    pg.click('#tree-spotlight a[data-sponsor-tree]')
+    fill_valid()
+    pg.click('#order-form button[type=submit]')
+    pg.wait_for_selector('#form-success:not(.hidden)')
+    ok('first submission held for activation: on-page "received" confirmation, no email-app step', 'received' in pg.inner_text('#form-success-text') and not pg.is_visible('#form-summary') and not pg.is_visible('#form-gmail'))
     for label, md in [('service says "not accepted"', 'rejected'), ('service returns an error', 'error'), ('no network to the service', 'down')]:
         mode['v'] = md
         pg.reload(wait_until='networkidle')
@@ -157,6 +182,9 @@ with sync_playwright() as p:
         href = pg.get_attribute('#form-mail-again', 'href') or ''
         ok(f'{label}: falls back to the email app with the request written out', 'One more step' in pg.inner_text('#form-success-title') and 'We could not send it' in pg.inner_text('#form-success-text')
            and all(x in summ for x in ['Aoife Ní Cheallaigh', 'aoife@example.ie', 'D06 W2N8']) and href.startswith('mailto:romacsweeney@gmail.com?subject=') and 'body=' in href, summ[:80])
+        gm = pg.get_attribute('#form-gmail', 'href') or ''
+        ou = pg.get_attribute('#form-outlook', 'href') or ''
+        ok(f'{label}: Gmail and Outlook buttons carry the recipient, subject and request', gm.startswith('https://mail.google.com/mail/?view=cm') and 'to=romacsweeney%40gmail.com' in gm and 'Aoife' in gm and ou.startswith('https://outlook.live.com/mail/0/deeplink/compose') and 'to=romacsweeney%40gmail.com' in ou and 'Aoife' in ou and pg.is_visible('#form-gmail') and pg.is_visible('#form-outlook'))
         pg.click('#form-copy')
         ok(f'{label}: copy button responds', pg.inner_text('#form-copy') in ('Copied', 'Press Ctrl+C'))
     pg.screenshot(path=OUT + '/e2e-form-fallback.png')
@@ -170,6 +198,36 @@ with sync_playwright() as p:
     ok('honeypot filled: nothing is sent and no summary is built', len(calls) == n and pg.input_value('#form-summary') == '')
     pg.goto(URL, wait_until='networkidle')
     pg.screenshot(path=OUT + '/e2e-desktop.png', full_page=True)
+    # ---------- certificate and gift card maker
+    import re as _re
+    q = b.new_page(viewport={'width': 1280, 'height': 900})
+    qe = []
+    q.on('pageerror', lambda e: qe.append(str(e)))
+    r = q.goto(URL + 'certificates.html', wait_until='networkidle')
+    ok('certificates.html loads, no errors, noindex', r.status == 200 and not qe and 'noindex' in q.get_attribute('meta[name=robots]', 'content'), str(qe))
+    q.select_option('#f-tree', 'hazel')
+    q.fill('#f-to', 'Maeve Murphy')
+    q.fill('#f-from', 'The Murphy family')
+    q.fill('#f-msg', 'Merry Christmas, with love')
+    q.fill('#f-no', '2026-001')
+    sh = q.inner_text('#sheet')
+    ok('certificate preview shows the name, tree, message, giver and number', all(x in sh for x in ['Certificate of Sponsorship', 'Maeve Murphy', 'Hazel', 'Coll', 'Merry Christmas', 'The Murphy family', '2026-001', 'Wisdom']), sh[:120])
+    ok('certificate shows the logo and the tree photo, both loaded and credited', q.evaluate("[...document.querySelectorAll('#sheet img')].length === 2 && [...document.querySelectorAll('#sheet img')].every(i => i.complete && i.naturalWidth > 0)") and 'Photo:' in sh)
+    ok('certificate has no invented details (no GPS, registry or seal)', not _re.search(r'GPS|registry|seal|latitude', sh, _re.I))
+    q.emulate_media(media='print')
+    pdf = q.pdf(prefer_css_page_size=True, print_background=True)
+    ok('certificate prints on exactly one page', len(_re.findall(rb'/Type\s*/Page[^s]', pdf)) == 1)
+    q.emulate_media(media='screen')
+    q.check('input[value="gift"]')
+    q.select_option('#f-tree', '')
+    q.fill('#f-covers', 'One native Irish tree')
+    q.fill('#f-until', '2027-12-31')
+    sh = q.inner_text('#sheet')
+    ok('gift card preview: for, what it covers, choose-your-own-tree, voucher number, valid until, how to redeem', all(x in sh for x in ['Gift Card', 'Maeve Murphy', 'One native Irish tree', 'Choose your own', '2026-001', '31 December 2027', 'romacsweeney@gmail.com']), sh[:140])
+    q.emulate_media(media='print')
+    pdf = q.pdf(prefer_css_page_size=True, print_background=True)
+    ok('gift card prints on exactly one page', len(_re.findall(rb'/Type\s*/Page[^s]', pdf)) == 1)
+    q.close()
     # ---------- other pages
     for path, want in [('privacy.html', 'Privacy notice'), ('404.html', 'Page not found')]:
         q = b.new_page(viewport={'width': 1280, 'height': 800})

@@ -1,0 +1,39 @@
+/* Printable sheets for the certificate and gift card maker. Sizes use container units, so the preview on screen and the printed page look the same. */
+.sheet { container-type: inline-size; background: #fffdf6; color: #191c19; box-shadow: 0 6px 30px rgba(0, 0, 0, .15); border-radius: 4px; width: 100%; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+.sheet-cert { aspect-ratio: 297 / 210; page: cert; }
+.sheet-gift { aspect-ratio: 210 / 148; page: gift; }
+.sheet .frame { position: relative; height: 100%; padding: 4.2cqw 5cqw; border: .5cqw double #1c3a2c; outline: .25cqw solid #b79a4a; outline-offset: -1.6cqw; display: flex; flex-direction: column; align-items: center; text-align: center; background: radial-gradient(ellipse at top, #fffef9, #fbf6e6); }
+.sheet .brand { display: flex; flex-direction: column; align-items: center; gap: .6cqw; font-family: 'JetBrains Mono', monospace; font-size: 1.6cqw; letter-spacing: .18em; text-transform: uppercase; color: #1c3a2c; }
+.sheet .brand .logo { width: 9cqw; height: 9cqw; }
+.sheet h2 { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 5.2cqw; line-height: 1.1; margin: 1.6cqw 0 .6cqw; color: #052418; }
+.sheet .lead { font-size: 1.9cqw; color: #424844; margin: 0; }
+.sheet .name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 4.6cqw; color: #6f001c; margin: .8cqw 0 1.4cqw; min-height: 5.6cqw; }
+.sheet .covers { font-family: 'Playfair Display', serif; font-size: 2.6cqw; color: #1c3a2c; margin: .4cqw 0 1.2cqw; }
+.sheet .choose { font-size: 1.9cqw; color: #424844; margin: 1cqw 0; font-style: italic; }
+.sheet .treebox { display: flex; align-items: center; gap: 2.4cqw; text-align: left; background: rgba(28, 58, 44, .06); border-radius: 1cqw; padding: 1.2cqw; }
+.sheet .treebox img { width: 19cqw; height: 13cqw; object-fit: cover; border-radius: .7cqw; flex: none; }
+.sheet .gift-tree img { width: 16cqw; height: 10.5cqw; }
+.sheet .kicker { font-family: 'JetBrains Mono', monospace; font-size: 1.15cqw; letter-spacing: .12em; text-transform: uppercase; color: #4a672d; margin: 0; }
+.sheet .treename { font-family: 'Playfair Display', serif; font-size: 3cqw; color: #052418; margin: .3cqw 0 0; }
+.sheet .ogham { font-size: 2.6cqw; color: #b79a4a; margin: 0; line-height: 1.2; }
+.sheet .trait { font-size: 1.7cqw; color: #1c3a2c; margin: 0; font-weight: 600; }
+.sheet .dates { font-family: 'JetBrains Mono', monospace; font-size: 1.3cqw; color: #004b87; margin: .2cqw 0 0; }
+.sheet .msg { font-family: 'Playfair Display', serif; font-style: italic; font-size: 2cqw; color: #424844; margin: 1.4cqw 6cqw 0; max-width: 70%; }
+.sheet .foot { margin-top: auto; width: 100%; display: flex; justify-content: space-around; gap: 2cqw; padding-top: 1.6cqw; }
+.sheet .foot div { display: flex; flex-direction: column; gap: .3cqw; font-size: 1.9cqw; min-width: 16cqw; }
+.sheet .foot span { font-family: 'JetBrains Mono', monospace; font-size: 1.1cqw; letter-spacing: .12em; text-transform: uppercase; color: #727973; }
+.sheet .blank { display: inline-block; border-bottom: .2cqw solid #727973; height: 2.2cqw; }
+.sheet .fine { font-size: 1.15cqw; color: #727973; margin: 1.1cqw 0 0; }
+.sheet .how { font-size: 1.5cqw; color: #424844; margin: 1.2cqw 0 0; }
+
+@media print {
+  @page cert { size: A4 landscape; margin: 0; }
+  @page gift { size: A5 landscape; margin: 0; }
+  html, body { background: #fff !important; }
+  .no-print { display: none !important; }
+  main, .layout { padding: 0 !important; margin: 0 !important; max-width: none !important; display: block !important; }
+  .sheet { box-shadow: none; border-radius: 0; }
+  .sheet-cert { width: 297mm; height: 210mm; }
+  .sheet-gift { width: 210mm; height: 148mm; }
+  .sheet, .sheet * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

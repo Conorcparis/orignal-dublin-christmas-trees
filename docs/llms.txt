@@ -15,6 +15,11 @@ Status: Taking reservations for Christmas 2026.
 ## Free
 - Guardian tree finder: Enter a birth month and day to find the matching tree from the 13 trees of the Celtic tree calendar. A cultural feature, not a scientific claim.
 
+## Dublin Landscaping
+- Website: https://www.dublinlandscaping.ie/
+- Facebook: https://www.facebook.com/p/Dublin-Landscaping-100063761152359/
+- Instagram: https://www.instagram.com/dublinlandscaping/
+
 ## Machine-readable
 - beacon.json: https://conorcparis.github.io/orignal-dublin-christmas-trees/.well-known/beacon.json
 - agent.txt: https://conorcparis.github.io/orignal-dublin-christmas-trees/agent.txt

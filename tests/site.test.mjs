@@ -32,7 +32,7 @@ test('every local file the pages point at exists, and nothing loads from another
     const h = read(page);
     for (const m of h.matchAll(/(?:src|href)="([^"#?]+)"/g)) {
       const u = m[1];
-      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$|https:\/\/commons\.wikimedia\.org\/wiki\/File:)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
+      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$|https:\/\/commons\.wikimedia\.org\/wiki\/File:|https:\/\/www\.dublinlandscaping\.ie\/$|https:\/\/www\.facebook\.com\/p\/Dublin-Landscaping-100063761152359\/$|https:\/\/www\.instagram\.com\/dublinlandscaping\/$)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
       if (u.startsWith(BASE)) { assert.ok(fs.existsSync(path.join(DOCS, u.slice(BASE.length) || 'index.html')), `${page}: ${u}`); continue; }
       assert.ok(!/^https?:/.test(u), `${page} loads ${u} from outside the site`);
       assert.ok(fs.existsSync(path.join(DOCS, u === './' ? 'index.html' : u)), `${page}: missing ${u}`);
@@ -44,7 +44,7 @@ test('every image has an alt attribute; photos describe what they show', () => {
   for (const m of html.matchAll(/<img [^>]*>/g)) {
     const alt = m[0].match(/alt="([^"]*)"/);
     assert.ok(alt, `no alt on ${m[0].slice(0, 80)}`);
-    if (!/crest/.test(m[0])) assert.ok(alt[1].length > 15, `alt too short on ${m[0].slice(0, 80)}`);
+    if (!/logo-/.test(m[0])) assert.ok(alt[1].length > 15, `alt too short on ${m[0].slice(0, 80)}`);
   }
 });
 
@@ -101,4 +101,28 @@ test('credits page names the photographer and licence for all 13 photos, and is 
   assert.ok(read('sitemap.xml').includes('credits.html'));
   assert.ok(html.includes('href="credits.html"'));
   for (const f of fs.readdirSync(path.join(DOCS, 'images', 'trees'))) assert.ok(c.includes(`images/trees/${f}`), `${f} is not credited`);
+});
+
+test('new round logo is used everywhere; the old city shield is not referenced', () => {
+  for (const f of ['logo-128.png', 'logo-512.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'og-image.jpg']) assert.ok(fs.existsSync(path.join(DOCS, 'images', f)), f);
+  for (const page of ['index.html', 'privacy.html', '404.html', 'credits.html', 'certificates.html']) assert.ok(!read(page).includes('dublin-city-crest'), `${page} still shows the city shield`);
+  assert.ok(html.includes('images/logo-128.png'));
+  assert.ok(JSON.stringify(JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1])).includes('images/logo-512.png'));
+});
+
+test('Dublin Landscaping website, Facebook and Instagram are linked and in the beacon', () => {
+  for (const u of ['https://www.dublinlandscaping.ie/', 'https://www.facebook.com/p/Dublin-Landscaping-100063761152359/', 'https://www.instagram.com/dublinlandscaping/']) {
+    assert.ok(new RegExp(`href="${u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" rel="noopener"`).test(html), u);
+    assert.ok(read('.well-known/beacon.json').includes(u), `${u} missing from the beacon`);
+  }
+});
+
+test('certificate maker: noindex, not in the sitemap, 13 trees with photos, scripts exist', () => {
+  const c = read('certificates.html');
+  assert.ok(c.includes('<meta name="robots" content="noindex, nofollow">'));
+  assert.ok(!read('sitemap.xml').includes('certificates.html') && !html.includes('certificates.html'));
+  const opts = [...c.matchAll(/<option value="(\w+)" data-name="[^"]+"[^>]*data-photo="([^"]+)"/g)];
+  assert.equal(opts.length, 13);
+  for (const o of opts) assert.ok(fs.existsSync(path.join(DOCS, o[2])), o[2]);
+  for (const f of ['js/certificate.js', 'css/certificate.css']) assert.ok(fs.existsSync(path.join(DOCS, f)), f);
 });

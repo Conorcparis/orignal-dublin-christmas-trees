@@ -15,6 +15,18 @@ Live (GitHub Pages, served from `/docs`): https://conorcparis.github.io/orignal-
 | `tests/` | `site.test.mjs` (fast checks, `npm test`) and `browser-check.py` (clicks everything in a real browser). |
 | `DESIGN.md` | The design tokens exported from the design tool. |
 
+## Certificates and gift cards
+
+`docs/certificates.html` is the owner's maker (not linked from the public pages, not indexed): copy the details from a reservation email, check the preview, then Print or Save as PDF. A4 landscape for the sponsorship certificate, A5 landscape for the gift card, one page each. Nothing is sent or stored, and the certificate or voucher number is typed by hand (keep your own list: the site cannot check numbers, so anyone could print a lookalike). The reservation form asks the customer for the name, giver and message when sponsorship or a gift is ticked, so the details arrive ready to copy. Certificates deliberately carry no GPS, registry or seal wording until those are confirmed.
+
+## Logo
+
+The round badge (`docs/images/logo-*.png`, original in `src/original-images/logo-original.png`) is the site logo, favicon, app icon, social-sharing image and certificate emblem. `docs/images/dublin-city-crest.png` is no longer used and can be deleted.
+
+## Links
+
+The footer links to Dublin Landscaping (website, Facebook, Instagram). The same links are in the JSON-LD and the beacon (`profiles:` in `beacon-kit/facts.yaml`).
+
 ## Tree photos
 
 The 13 tree photos (carousel and guardian-tree finder) come from Wikimedia Commons under free licences. `src/photo-credits.json` holds the author, licence and source link for each; the carousel, the finder and `docs/credits.html` all read from it. To swap a photo, replace `docs/images/trees/<tree>.jpg`, update its record, and rebuild the page. The hero and woodland pictures are illustrative and should be replaced with real photographs.

@@ -37,7 +37,7 @@ def jsonld():
         "knowsLanguage": E["languages"],
         "contactPoint": {"@type": "ContactPoint", "contactType": "customer service", "email": E["email"], "areaServed": "IE", "availableLanguage": ["English"]},
     }
-    same = [v for k, v in PROFILES.items() if k in ("forum_profile",) and v]
+    same = [v for k, v in PROFILES.items() if k in ("dublin_landscaping_website", "facebook", "instagram", "forum_profile") and v]
     if same:
         core["sameAs"] = same
     return core
@@ -58,6 +58,7 @@ def beacon_json():
             "free_features": F["free_features"],
             "audiences": F["audiences"],
             "data_protection": F["data_protection"],
+            "profiles": {k: v for k, v in PROFILES.items() if k in ("dublin_landscaping_website", "facebook", "instagram") and v},
             "proof": {"results": [], "note": "No customers, partners, certifications or awards are announced."},
             "engage": {"human_handoff": E["human_handoff"], "reservation_form": E["reservation_form"], "agent_may_not": F["agent_rules"]["may_not"]},
             "agent_card": None,
@@ -79,6 +80,9 @@ def beacon_md():
     L += ["", "## Promises"] + [f"- {p}" for p in F["promises"]]
     L += ["", "## Who it is for", F["audiences"]["buyers"], "", "## Contact", f"- Email: {E['email']}", f"- Reservation form: {E['reservation_form']}", "",
           "## Data protection", F["data_protection"], "", "## An agent may not"] + [f"- {x}" for x in F["agent_rules"]["may_not"]]
+    prof = {k: v for k, v in PROFILES.items() if k in ("dublin_landscaping_website", "facebook", "instagram") and v}
+    if prof:
+        L += ["", "## Dublin Landscaping"] + [f"- {k.replace('dublin_landscaping_', '').replace('_', ' ').title()}: {v}" for k, v in prof.items()]
     L += ["", "## Proof", "No customers, partners, certifications or awards are announced.", "", f"Updated {F['updated']} from facts.yaml."]
     return "\n".join(L)
 
@@ -88,6 +92,9 @@ def llms_txt():
     L += [f"- [{p['title']}]({p['url']})" + (f": {p['text']}" if p.get("text") else "") for p in F["site_pages"]["en"]]
     L += ["", "## What is offered"] + [f"- {o['name']}: {o['text']}" for o in F["offers"]]
     L += ["", "## Free"] + [f"- {x['name']}: {x['text']}" for x in F["free_features"]]
+    prof = {k: v for k, v in PROFILES.items() if k in ("dublin_landscaping_website", "facebook", "instagram") and v}
+    if prof:
+        L += ["", "## Dublin Landscaping"] + [f"- {k.replace('dublin_landscaping_', '').replace('_', ' ').title()}: {v}" for k, v in prof.items()]
     L += ["", "## Machine-readable", f"- beacon.json: {BASE}.well-known/beacon.json", *([f"- beacon.md: {BASE}beacon.md"] if MD else []), f"- agent.txt: {BASE}agent.txt", f"- sitemap: {BASE}sitemap.xml",
           "", "## Contact", f"- {E['email']}", f"- Reservation form: {E['reservation_form']}"]
     return "\n".join(L)
