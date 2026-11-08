@@ -15,6 +15,8 @@
   // If the service cannot be reached, the form falls back to opening the visitor's own email app with the request written out.
   // Empty string = always use the email app. To switch service, change this address and the payload in sendToService() below.
   var FORM_ENDPOINT = 'https://formsubmit.co/ajax/' + EMAIL;
+  // The orders database (js/config.js sets its address). A reservation is saved there first and gets a reference number; FormSubmit then sends the owner an email alert.
+  var ORDERS = ((typeof window !== 'undefined' && window.SITE_CONFIG || {}).ordersApi || '').replace(/\/$/, '');
 
   var TREES = [
     { name: 'Birch', irish: 'Beith', dates: 'Dec 24 – Jan 20', trait: 'New Beginnings & Renewal', ogham: 'ᚁ', desc: 'Birch pioneers new ground with resilience, inspiring those born in deep midwinter to forge paths of hope.' },
@@ -176,13 +178,23 @@
     ctl = new AbortController();
     return fetch(FORM_ENDPOINT, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, signal: ctl.signal,
-      body: JSON.stringify(Object.assign({ _subject: 'Tree reservation 2026: ' + d.name, _template: 'table', _captcha: 'false', name: d.name, email: d.email, interests: interests.join(', '), tree: treeName, area: d.area || '(not given)' }, d.cert, { message: text }))
+      body: JSON.stringify(Object.assign({ _subject: 'Tree reservation 2026: ' + d.name + (d.ref ? ' (' + d.ref + ')' : ''), _template: 'table', _captcha: 'false', name: d.name, email: d.email, interests: interests.join(', '), tree: treeName, area: d.area || '(not given)' }, d.cert, { message: text }))
     }).then(function (r) { if (!r.ok) throw new Error('status ' + r.status); return r.json(); })
       .then(function (j) {
         if (j && (j.success === true || j.success === 'true')) return;
         if (j && /activation/i.test(String(j.message || ''))) return;   // first ever submission: FormSubmit holds it until the owner confirms its one-time email, then delivers it
         throw new Error('not accepted');
       });
+  }
+
+  // Saves the reservation in the orders database; resolves with its reference (for example R-7KQ2MX).
+  function saveOrder(d, interests, treeName) {
+    var c = new AbortController(), t = setTimeout(function () { c.abort(); }, 10000);
+    return fetch(ORDERS + '/api/reservations', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: c.signal,
+      body: JSON.stringify(Object.assign({ name: d.name, email: d.email, interests: interests, tree: treeName, area: d.area, consent: true }, d.cert))
+    }).then(function (r) { return r.json().then(function (j) { if (!r.ok || !j || !j.ok || !j.ref) throw new Error('not saved'); return j.ref; }); })
+      .then(function (ref) { clearTimeout(t); return ref; }, function (e) { clearTimeout(t); throw e; });
   }
 
   function mailtoFor(d, text) {
@@ -211,12 +223,26 @@
         window.location.href = link;
       }
 
-      if (!FORM_ENDPOINT) { viaEmailApp(''); return; }
+      function received(ref) {
+        btn.disabled = false; say('');
+        showDone('Go raibh maith agat!', 'Your reservation request has been received.' + (ref ? ' Your reference is ' + ref + '.' : '') + ' We will email you at ' + d.email + ' to confirm.', '');
+      }
+      // the older route, used when the database cannot be reached: straight to the owner's email by the form service, then by the visitor's own email app
+      function viaEmailService() {
+        if (!FORM_ENDPOINT) { btn.disabled = false; say(''); viaEmailApp(''); return; }
+        var timer = setTimeout(function () { ctl.abort(); }, 10000);
+        sendToService(d, interests, treeName, text)
+          .then(function () { clearTimeout(timer); received(''); })
+          .catch(function () { clearTimeout(timer); btn.disabled = false; say(''); viaEmailApp('We could not send it from this page. '); });
+      }
+
       btn.disabled = true; say('Sending…');
-      var timer = setTimeout(function () { ctl.abort(); }, 10000);
-      sendToService(d, interests, treeName, text)
-        .then(function () { clearTimeout(timer); btn.disabled = false; say(''); showDone('Go raibh maith agat!', 'Your reservation request has been received. We will email you at ' + d.email + ' to confirm.', ''); })
-        .catch(function () { clearTimeout(timer); btn.disabled = false; say(''); viaEmailApp('We could not send it from this page. '); });
+      if (!ORDERS) { viaEmailService(); return; }
+      saveOrder(d, interests, treeName).then(function (ref) {
+        d.ref = ref;
+        if (FORM_ENDPOINT) sendToService(d, interests, treeName, text + '\nReference: ' + ref).catch(function () { /* only an alert: the order is already saved */ });
+        received(ref);
+      }, viaEmailService);
     });
     var copy = $('#form-copy');
     if (copy) copy.addEventListener('click', function () {

@@ -15,6 +15,17 @@ Live (GitHub Pages, served from `/docs`): https://conorcparis.github.io/orignal-
 | `tests/` | `site.test.mjs` (fast checks, `npm test`) and `browser-check.py` (clicks everything in a real browser). |
 | `DESIGN.md` | The design tokens exported from the design tool. |
 
+## Orders database
+
+Reservations are saved by a small Cloudflare Worker with a D1 database (`worker/`, live at https://dublin-trees-orders.conor-0a0.workers.dev, database `dublin-trees-orders`, stored in Western Europe). The customer gets a reference (for example `R-7KQ2MX`); the owner is alerted by email through FormSubmit; if the Worker is unreachable the form falls back to FormSubmit alone, then to the visitor's email app, so no order is lost.
+
+The owner signs in at `docs/admin.html` (on the site, not linked or indexed) with a private key, sees every order, sets its status (new, confirmed, paid, done, cancelled), keeps notes, opens the certificate or gift card for an order pre-filled, downloads a CSV, and erases an order on request.
+
+- **The key** is `worker/.admin-key.txt` on the machine that deployed it. It is git-ignored and is a secret of the Worker (`wrangler secret put ADMIN_TOKEN`); it is not in this repository. Give it only to the owner. To replace it: put a new random string in that file, run `wrangler secret put ADMIN_TOKEN` in `worker/`, and sign in again.
+- **Limits:** 5 reservations an hour per visitor, 3 a day per email address, 60 an hour in total; wrong keys are cut off after 10 an hour. No IP address is stored, only salted hashes that are deleted as soon as their window ends.
+- **Deploy or change it:** `cd worker`, then `npx wrangler deploy`. Tests: `npm test` (the service is tested against a real SQLite engine). Schema: `worker/schema.sql`.
+- **Retention:** nothing is deleted automatically. The owner erases orders in the admin page; decide a retention period (see `beacon-kit/facts.yaml`, `confirm:`).
+
 ## Certificates and gift cards
 
 `docs/certificates.html` is the owner's maker (not linked from the public pages, not indexed): copy the details from a reservation email, check the preview, then Print or Save as PDF. A4 landscape for the sponsorship certificate, A5 landscape for the gift card, one page each. Nothing is sent or stored, and the certificate or voucher number is typed by hand (keep your own list: the site cannot check numbers, so anyone could print a lookalike). The reservation form asks the customer for the name, giver and message when sponsorship or a gift is ticked, so the details arrive ready to copy. Certificates deliberately carry no GPS, registry or seal wording until those are confirmed.

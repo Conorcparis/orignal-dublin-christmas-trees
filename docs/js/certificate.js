@@ -61,6 +61,14 @@
   // today's date as the default
   var now = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
   $('#f-date').value = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  // Opened from an order on the admin page: #kind=cert&to=...&from=...&msg=...&tree=hazel&no=R-7KQ2MX fills the form in (the hash never leaves the browser)
+  (function prefill() {
+    var h = (location.hash || '').replace(/^#/, ''); if (!h) return;
+    var q = new URLSearchParams(h), set = function (id, v) { if (v) $('#f-' + id).value = v.slice(0, 160); };
+    var kind = q.get('kind') === 'gift' ? 'gift' : 'cert'; var r = form.querySelector('input[name="kind"][value="' + kind + '"]'); if (r) r.checked = true;
+    var tree = (q.get('tree') || '').toLowerCase(); if (tree && treeSel.querySelector('option[value="' + tree.replace(/[^a-z]/g, '') + '"]')) treeSel.value = tree.replace(/[^a-z]/g, '');
+    set('to', q.get('to')); set('from', q.get('from')); set('msg', q.get('msg')); set('no', q.get('no'));
+  })();
   form.addEventListener('input', render); form.addEventListener('change', render);
   $('#btn-print').addEventListener('click', function () {
     var who = field('to') || 'recipient', old = document.title;

@@ -1,0 +1,13 @@
+{
+  // Orders service for The Original Dublin Christmas Trees. No secrets in this file.
+  //   1. npx wrangler d1 create dublin-trees-orders --location weur   -> paste the database_id below
+  //   2. npx wrangler d1 execute dublin-trees-orders --remote --file=schema.sql
+  //   3. npx wrangler secret put ADMIN_TOKEN                          (a long random string; give it only to the owner)
+  //   4. npx wrangler deploy
+  "name": "dublin-trees-orders",
+  "main": "./src/index.js",
+  "compatibility_date": "2026-10-15",
+  "workers_dev": true,
+  "preview_urls": false,
+  "d1_databases": [{ "binding": "DB", "database_name": "dublin-trees-orders", "database_id": "9181ad51-954d-49a2-a618-9cbd2a09c98b" }]
+}

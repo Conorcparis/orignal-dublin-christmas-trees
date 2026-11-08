@@ -1,3 +1,9 @@
 node_modules/
 beacon-kit/out/
 *.bak*
+# secrets: never commit
+worker/.admin-key.txt
+worker/.dev.vars
+.dev.vars
+.wrangler/
+*.tmp

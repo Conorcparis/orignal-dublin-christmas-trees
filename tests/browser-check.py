@@ -16,6 +16,26 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     # ---------- desktop
     pg = b.new_page(viewport={'width': 1280, 'height': 900})
+    OAPI = 'https://orders.example.test'
+    ocalls = []
+    omode = {'v': 'down'}
+    pg.route('**/js/config.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body="window.SITE_CONFIG = { ordersApi: '%s' };" % OAPI))
+
+    def orders(route):
+        h = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*'}
+        if route.request.method == 'OPTIONS':
+            route.fulfill(status=204, headers=h)
+            return
+        ocalls.append(route.request.post_data)
+        if omode['v'] == 'ok':
+            route.fulfill(status=201, content_type='application/json', headers=h, body='{"ok":true,"ref":"R-TEST12"}')
+        elif omode['v'] == 'limited':
+            route.fulfill(status=429, content_type='application/json', headers=h, body='{"ok":false,"error":"rate_limited"}')
+        elif omode['v'] == 'invalid':
+            route.fulfill(status=400, content_type='application/json', headers=h, body='{"ok":false,"error":"invalid"}')
+        else:
+            route.fulfill(status=500, headers=h, body='boom')
+    pg.route(OAPI + '/**', orders)
     errs, failed = [], []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
@@ -163,6 +183,36 @@ with sync_playwright() as p:
        and sent['interests'] == 'Christmas tree, Gift certificate' and 'Oak' in sent['tree'] and sent['_subject'].startswith('Tree reservation 2026') and sent['_captcha'] == 'false', str(sent)[:200])
     ok('the request carries the certificate details the client typed', sent.get('cert_name') == 'Maeve Murphy' and sent.get('cert_from') == 'The Murphy family' and sent.get('cert_message') == 'Merry Christmas' and 'Maeve Murphy' in sent['message'], str(sent)[:200])
     pg.screenshot(path=OUT + '/e2e-form-done.png')
+    # the order list is reachable: saved first, reference shown, FormSubmit only sends the alert email
+    omode['v'] = 'ok'
+    mode['v'] = 'ok'
+    n_alerts = len(calls)
+    ocalls.clear()
+    pg.reload(wait_until='networkidle')
+    pg.click('.zodiac-pill[data-tree="4"]')
+    pg.click('#tree-spotlight a[data-sponsor-tree]')
+    fill_valid()
+    pg.click('#order-form button[type=submit]')
+    pg.wait_for_selector('#form-success:not(.hidden)')
+    pg.wait_for_timeout(300)
+    saved = _json.loads(ocalls[0])
+    ok('order list reachable: the reservation is saved with the customer\'s details and consent', len(ocalls) == 1 and saved['name'] == 'Aoife Ní Cheallaigh' and saved['email'] == 'aoife@example.ie' and saved['consent'] is True and 'Tree sponsorship' in saved['interests']
+       and saved['cert_name'] == 'Maeve Murphy' and 'website' not in saved, str(saved)[:200])
+    ok('the customer is shown their reference number', 'R-TEST12' in pg.inner_text('#form-success-text') and not pg.is_visible('#form-summary'))
+    alert = _json.loads(calls[n_alerts])
+    ok('the owner gets one email alert, carrying the reference', len(calls) == n_alerts + 1 and 'R-TEST12' in alert['_subject'] and 'R-TEST12' in alert['message'])
+    pg.screenshot(path=OUT + '/e2e-form-reference.png')
+    for label, om in [('order list says too many requests', 'limited'), ('order list is down', 'down')]:
+        omode['v'] = om
+        mode['v'] = 'ok'
+        n_alerts = len(calls)
+        pg.reload(wait_until='networkidle')
+        pg.click('.zodiac-pill[data-tree="2"]')
+        fill_valid()
+        pg.click('#order-form button[type=submit]')
+        pg.wait_for_selector('#form-success:not(.hidden)')
+        ok(f'{label}: falls back to the email service alone, still "received", no reference', 'received' in pg.inner_text('#form-success-text') and 'reference' not in pg.inner_text('#form-success-text') and len(calls) == n_alerts + 1)
+    omode['v'] = 'down'
     mode['v'] = 'activation'
     pg.reload(wait_until='networkidle')
     pg.click('.zodiac-pill[data-tree="2"]')
@@ -224,10 +274,102 @@ with sync_playwright() as p:
     q.fill('#f-until', '2027-12-31')
     sh = q.inner_text('#sheet')
     ok('gift card preview: for, what it covers, choose-your-own-tree, voucher number, valid until, how to redeem', all(x in sh for x in ['Gift Card', 'Maeve Murphy', 'One native Irish tree', 'Choose your own', '2026-001', '31 December 2027', 'romacsweeney@gmail.com']), sh[:140])
+    long_msg = 'Merry Christmas and a very happy new year to you and all the family, with all our love from everyone. ' * 2
+    long_name = 'Aoife Ní Cheallaigh-Fitzgerald Mac Giolla Phádraig'
+    for kind in ('cert', 'gift'):
+        q.check('input[value="%s"]' % kind)
+        q.select_option('#f-tree', 'hawthorn')
+        q.fill('#f-to', long_name)
+        q.fill('#f-from', 'The Murphy-Fitzgerald family and friends')
+        q.fill('#f-msg', long_msg)
+        q.fill('#f-no', 'R-7KQ2MX')
+        if kind == 'gift':
+            q.fill('#f-covers', 'One native Irish tree, sponsored in your name, plus a Christmas tree')
+            q.fill('#f-until', '2027-12-31')
+        q.wait_for_timeout(250)
+        fit = q.evaluate("(() => { const f = document.querySelector('#sheet .frame'); const last = [...f.children].pop().getBoundingClientRect(); const box = f.getBoundingClientRect(); return { scroll: f.scrollHeight - f.clientHeight, gap: box.bottom - last.bottom }; })()")
+        ok(f'{kind}: the longest allowed text still fits on the sheet (nothing cut off at the bottom)', fit['scroll'] <= 1 and fit['gap'] >= 0, str(fit))
+    q.check('input[value="gift"]')
     q.emulate_media(media='print')
     pdf = q.pdf(prefer_css_page_size=True, print_background=True)
     ok('gift card prints on exactly one page', len(_re.findall(rb'/Type\s*/Page[^s]', pdf)) == 1)
     q.close()
+    # ---------- owner's admin page (the order service is mocked)
+    AAPI = 'https://dublin-trees-orders.test.workers.dev'   # the admin page's security policy only allows Cloudflare addresses
+    adm = b.new_page(viewport={'width': 1280, 'height': 1000})
+    adm_errs = []
+    adm.on('pageerror', lambda e: adm_errs.append(str(e)))
+    adm.on('dialog', lambda d: d.accept())
+    reqs = []
+    DATA = [
+        {'ref': 'R-7KQ2MX', 'created_at': '2026-11-08T17:42:00.000Z', 'name': 'Maeve Murphy', 'email': 'maeve@example.ie', 'interests': 'Christmas tree, Gift certificate', 'tree': 'Hazel · Coll (Wisdom & Creativity)', 'area': 'D06 W2N8', 'cert_name': 'Aoife Ní Cheallaigh', 'cert_from': 'The Murphy family', 'cert_message': 'Merry Christmas', 'status': 'new', 'notes': ''},
+        {'ref': 'R-4TNB8E', 'created_at': '2026-11-08T15:10:00.000Z', 'name': '<img src=x onerror="window.__xss=1">', 'email': 'sean@example.ie', 'interests': 'Christmas tree', 'tree': 'Oak · Duir', 'area': '', 'cert_name': '', 'cert_from': '', 'cert_message': '', 'status': 'paid', 'notes': '<script>window.__xss=2</script>'},
+    ]
+    GOODKEY = 'k' * 40
+    adm.route('**/js/config.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body="window.SITE_CONFIG = { ordersApi: '%s' };" % AAPI))
+
+    def admin_api(route):
+        h = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*'}
+        rq = route.request
+        if rq.method == 'OPTIONS':
+            route.fulfill(status=204, headers=h)
+            return
+        reqs.append((rq.method, rq.url.replace(AAPI, ''), rq.headers.get('authorization', ''), rq.post_data))
+        if rq.headers.get('authorization') != 'Bearer ' + GOODKEY:
+            route.fulfill(status=401, content_type='application/json', headers=h, body='{"ok":false,"error":"unauthorised"}')
+        elif rq.url.endswith('export.csv'):
+            route.fulfill(status=200, content_type='text/csv', headers=h, body='ref,name\r\nR-7KQ2MX,Maeve\r\n')
+        elif rq.method == 'GET':
+            route.fulfill(status=200, content_type='application/json', headers=h, body=_json.dumps({'ok': True, 'reservations': DATA}))
+        else:
+            route.fulfill(status=200, content_type='application/json', headers=h, body='{"ok":true}')
+    adm.route(AAPI + '/**', admin_api)
+    adm.goto(URL + 'admin.html', wait_until='networkidle')
+    ok('admin: noindex, shows only the sign-in at first, owner key is not in the page', 'noindex' in adm.get_attribute('meta[name=robots]', 'content') and adm.is_visible('#login') and not adm.is_visible('#panel') and GOODKEY not in adm.content())
+    adm.fill('#key', 'wrong' * 8)
+    adm.click('#login-form button[type=submit]')
+    adm.wait_for_selector("#login-msg:has-text('not accepted')")
+    ok('admin: a wrong key is refused and nothing is shown', adm.is_visible('#login') and not adm.is_visible('#panel') and adm.locator('#list li').count() == 0)
+    adm.fill('#key', GOODKEY)
+    adm.click('#login-form button[type=submit]')
+    adm.wait_for_selector('#list li')
+    ok('admin: the right key lists the reservations with the key sent as a Bearer header, never in the address', adm.locator('#list li').count() == 2 and any(r[2] == 'Bearer ' + GOODKEY for r in reqs) and not any(GOODKEY in r[1] for r in reqs))
+    ok('admin: customer text is shown as text, nothing runs (no injected element, no script ran)', adm.locator('#list img[src="x"]').count() == 0 and adm.evaluate("window.__xss === undefined") and '<img src=x' in adm.inner_text('#list'))
+    first = adm.locator('#list li').first
+    href = first.locator('a:has-text("Certificate")').get_attribute('href')
+    ok('admin: Certificate and Gift card buttons open the maker pre-filled with this order', href.startswith('certificates.html#kind=cert&') and 'to=Aoife' in href and 'tree=hazel' in href and 'no=R-7KQ2MX' in href and first.locator('a:has-text("Gift card")').get_attribute('href').startswith('certificates.html#kind=gift&'), href)
+    ok('admin: an order with no certificate details has no certificate buttons', adm.locator('#list li').nth(1).locator('a:has-text("Certificate")').count() == 0)
+    first.locator('select').select_option('paid')
+    adm.wait_for_selector("#list li select + span:text-is('Saved')")
+    ok('admin: changing the status sends a PATCH for that reference', any(r[0] == 'PATCH' and r[1].endswith('/R-7KQ2MX') and '"status":"paid"' in (r[3] or '') for r in reqs))
+    first.locator('textarea').fill('Paid by transfer')
+    first.locator('button:has-text("Save notes")').click()
+    adm.wait_for_timeout(300)
+    ok('admin: notes are saved', any(r[0] == 'PATCH' and 'Paid by transfer' in (r[3] or '') for r in reqs))
+    adm.locator('#list li').nth(1).locator('button:has-text("Erase")').click()
+    adm.wait_for_timeout(300)
+    ok('admin: Erase (after the confirmation) sends a DELETE for that reference', any(r[0] == 'DELETE' and r[1].endswith('/R-4TNB8E') for r in reqs))
+    with adm.expect_download() as dl:
+        adm.click('#export')
+    ok('admin: Download CSV delivers a file', dl.value.suggested_filename == 'reservations.csv')
+    adm.screenshot(path=OUT + '/e2e-admin.png', full_page=True)
+    adm.reload(wait_until='networkidle')
+    adm.wait_for_selector('#list li')
+    ok('admin: a reload in the same tab keeps the owner signed in', adm.is_visible('#panel'))
+    ok('admin: the key is kept for the tab only, never in long-term storage', adm.evaluate("localStorage.length === 0 && sessionStorage.length === 1"))
+    other = b.new_page(viewport={'width': 1280, 'height': 800})
+    other.route('**/js/config.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body="window.SITE_CONFIG = { ordersApi: '%s' };" % AAPI))
+    other.goto(URL + 'admin.html', wait_until='networkidle')
+    ok('admin: a new tab has to sign in again', other.is_visible('#login') and not other.is_visible('#panel'))
+    other.close()
+    ok('admin: a strict content-security policy is in place', "default-src 'none'" in adm.get_attribute('meta[http-equiv=Content-Security-Policy]', 'content') and "script-src 'self'" in adm.get_attribute('meta[http-equiv=Content-Security-Policy]', 'content'))
+    mail = adm.locator('#list li').first.locator('a[href^="mailto:"]').get_attribute('href')
+    ok('admin: customer email links are encoded', mail == 'mailto:maeve@example.ie', mail)
+    adm.click('#logout')
+    adm.reload(wait_until='networkidle')
+    ok('admin: Sign out forgets the key', adm.is_visible('#login') and not adm.is_visible('#panel'))
+    ok('admin: no page errors', not adm_errs, str(adm_errs[:2]))
+    adm.close()
     # ---------- other pages
     for path, want in [('privacy.html', 'Privacy notice'), ('404.html', 'Page not found')]:
         q = b.new_page(viewport={'width': 1280, 'height': 800})

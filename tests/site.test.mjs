@@ -32,7 +32,7 @@ test('every local file the pages point at exists, and nothing loads from another
     const h = read(page);
     for (const m of h.matchAll(/(?:src|href)="([^"#?]+)"/g)) {
       const u = m[1];
-      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$|https:\/\/commons\.wikimedia\.org\/wiki\/File:|https:\/\/www\.dublinlandscaping\.ie\/$|https:\/\/www\.facebook\.com\/p\/Dublin-Landscaping-100063761152359\/$|https:\/\/www\.instagram\.com\/dublinlandscaping\/$)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
+      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$|https:\/\/www\.cloudflare\.com$|https:\/\/commons\.wikimedia\.org\/wiki\/File:|https:\/\/www\.dublinlandscaping\.ie\/$|https:\/\/www\.facebook\.com\/p\/Dublin-Landscaping-100063761152359\/$|https:\/\/www\.instagram\.com\/dublinlandscaping\/$)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
       if (u.startsWith(BASE)) { assert.ok(fs.existsSync(path.join(DOCS, u.slice(BASE.length) || 'index.html')), `${page}: ${u}`); continue; }
       assert.ok(!/^https?:/.test(u), `${page} loads ${u} from outside the site`);
       assert.ok(fs.existsSync(path.join(DOCS, u === './' ? 'index.html' : u)), `${page}: missing ${u}`);
@@ -125,4 +125,32 @@ test('certificate maker: noindex, not in the sitemap, 13 trees with photos, scri
   assert.equal(opts.length, 13);
   for (const o of opts) assert.ok(fs.existsSync(path.join(DOCS, o[2])), o[2]);
   for (const f of ['js/certificate.js', 'css/certificate.css']) assert.ok(fs.existsSync(path.join(DOCS, f)), f);
+});
+
+test('admin page: not indexed, strict security policy, key never in the page, no long-term key storage', () => {
+  const a = read('admin.html'), js = read('js/admin.js');
+  assert.ok(a.includes('<meta name="robots" content="noindex, nofollow, noarchive">') && a.includes('name="referrer" content="no-referrer"'));
+  assert.match(a, /Content-Security-Policy" content="default-src 'none'; script-src 'self'/);
+  assert.ok(!/Bearer [A-Za-z0-9_-]{20,}/.test(a + js), 'no key in the page');
+  assert.ok(!js.includes('localStorage.setItem'), 'the owner key is never put in long-term storage');
+  assert.ok(!read('sitemap.xml').includes('admin.html') && !html.includes('admin.html'));
+});
+
+test('the orders service address comes from one small config file, and the privacy notice names both services', () => {
+  assert.match(read('js/config.js'), /window\.SITE_CONFIG = \{ ordersApi: '(https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev)?' \};/);
+  const p = read('privacy.html');
+  assert.ok(p.includes('Cloudflare') && p.includes('FormSubmit') && /erase/i.test(p));
+});
+
+test('no secret is in the public repository', () => {
+  const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.name === 'node_modules' || e.name === '.git' ? [] : e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]);
+  for (const f of walk(ROOT)) {
+    if (/\.(png|jpe?g|ico|woff2|pdf)$/i.test(f)) continue;
+    const t = fs.readFileSync(f, 'utf8');
+    assert.ok(!/ADMIN_TOKEN\s*[=:]\s*['"][A-Za-z0-9_\-+/=]{24,}['"]/.test(t), `${f} looks like it holds the owner key`);
+    assert.ok(!/Bearer [A-Za-z0-9_\-]{30,}/.test(t) || f.includes('tests'), `${f} holds a bearer token`);
+  }
+  assert.ok(!fs.existsSync(path.join(ROOT, 'worker', '.admin-key.txt')) || /\.admin-key/.test(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8')), 'the key file must be git-ignored');
+  assert.match(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8'), /\.admin-key\.txt/);
+  assert.match(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8'), /\.dev\.vars/);
 });

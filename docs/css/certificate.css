@@ -2,29 +2,51 @@
 .sheet { container-type: inline-size; background: #fffdf6; color: #191c19; box-shadow: 0 6px 30px rgba(0, 0, 0, .15); border-radius: 4px; width: 100%; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
 .sheet-cert { aspect-ratio: 297 / 210; page: cert; }
 .sheet-gift { aspect-ratio: 210 / 148; page: gift; }
-.sheet .frame { position: relative; height: 100%; padding: 4.2cqw 5cqw; border: .5cqw double #1c3a2c; outline: .25cqw solid #b79a4a; outline-offset: -1.6cqw; display: flex; flex-direction: column; align-items: center; text-align: center; background: radial-gradient(ellipse at top, #fffef9, #fbf6e6); }
+.sheet .frame { position: relative; height: 100%; padding: 3.4cqw 5cqw; border: .5cqw double #1c3a2c; outline: .25cqw solid #b79a4a; outline-offset: -1.6cqw; display: flex; flex-direction: column; align-items: center; text-align: center; background: radial-gradient(ellipse at top, #fffef9, #fbf6e6); }
 .sheet .brand { display: flex; flex-direction: column; align-items: center; gap: .6cqw; font-family: 'JetBrains Mono', monospace; font-size: 1.6cqw; letter-spacing: .18em; text-transform: uppercase; color: #1c3a2c; }
 .sheet .brand .logo { width: 9cqw; height: 9cqw; }
-.sheet h2 { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 5.2cqw; line-height: 1.1; margin: 1.6cqw 0 .6cqw; color: #052418; }
+.sheet h2 { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 4.8cqw; line-height: 1.1; margin: 1cqw 0 .4cqw; color: #052418; }
 .sheet .lead { font-size: 1.9cqw; color: #424844; margin: 0; }
-.sheet .name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 4.6cqw; color: #6f001c; margin: .8cqw 0 1.4cqw; min-height: 5.6cqw; }
+.sheet .name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 4.2cqw; line-height: 1.15; color: #6f001c; margin: .5cqw 0 1cqw; min-height: 4.8cqw; }
 .sheet .covers { font-family: 'Playfair Display', serif; font-size: 2.6cqw; color: #1c3a2c; margin: .4cqw 0 1.2cqw; }
 .sheet .choose { font-size: 1.9cqw; color: #424844; margin: 1cqw 0; font-style: italic; }
 .sheet .treebox { display: flex; align-items: center; gap: 2.4cqw; text-align: left; background: rgba(28, 58, 44, .06); border-radius: 1cqw; padding: 1.2cqw; }
-.sheet .treebox img { width: 19cqw; height: 13cqw; object-fit: cover; border-radius: .7cqw; flex: none; }
+.sheet .treebox img { width: 17cqw; height: 11.5cqw; object-fit: cover; border-radius: .7cqw; flex: none; }
 .sheet .gift-tree img { width: 16cqw; height: 10.5cqw; }
 .sheet .kicker { font-family: 'JetBrains Mono', monospace; font-size: 1.15cqw; letter-spacing: .12em; text-transform: uppercase; color: #4a672d; margin: 0; }
 .sheet .treename { font-family: 'Playfair Display', serif; font-size: 3cqw; color: #052418; margin: .3cqw 0 0; }
 .sheet .ogham { font-size: 2.6cqw; color: #b79a4a; margin: 0; line-height: 1.2; }
 .sheet .trait { font-size: 1.7cqw; color: #1c3a2c; margin: 0; font-weight: 600; }
 .sheet .dates { font-family: 'JetBrains Mono', monospace; font-size: 1.3cqw; color: #004b87; margin: .2cqw 0 0; }
-.sheet .msg { font-family: 'Playfair Display', serif; font-style: italic; font-size: 2cqw; color: #424844; margin: 1.4cqw 6cqw 0; max-width: 70%; }
-.sheet .foot { margin-top: auto; width: 100%; display: flex; justify-content: space-around; gap: 2cqw; padding-top: 1.6cqw; }
+.sheet .msg { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.9cqw; line-height: 1.3; color: #424844; margin: 1cqw 6cqw 0; max-width: 78%; }
+.sheet .foot { margin-top: auto; width: 100%; display: flex; justify-content: space-around; gap: 2cqw; padding-top: 1.2cqw; }
 .sheet .foot div { display: flex; flex-direction: column; gap: .3cqw; font-size: 1.9cqw; min-width: 16cqw; }
 .sheet .foot span { font-family: 'JetBrains Mono', monospace; font-size: 1.1cqw; letter-spacing: .12em; text-transform: uppercase; color: #727973; }
 .sheet .blank { display: inline-block; border-bottom: .2cqw solid #727973; height: 2.2cqw; }
 .sheet .fine { font-size: 1.15cqw; color: #727973; margin: 1.1cqw 0 0; }
 .sheet .how { font-size: 1.5cqw; color: #424844; margin: 1.2cqw 0 0; }
+
+/* the gift card is a smaller sheet (A5), so everything on it is tighter */
+.sheet-gift .frame { padding: 3cqw 4cqw; }
+.sheet-gift .brand .logo { width: 6cqw; height: 6cqw; }
+.sheet-gift .brand { font-size: 1.3cqw; }
+.sheet-gift h2 { font-size: 4cqw; margin: .8cqw 0 .2cqw; }
+.sheet-gift .lead { font-size: 1.6cqw; }
+.sheet-gift .name { font-size: 3.4cqw; margin: .3cqw 0 .5cqw; min-height: 4cqw; }
+.sheet-gift .covers { font-size: 2.1cqw; margin: .2cqw 0 .7cqw; }
+.sheet-gift .choose { font-size: 1.7cqw; margin: .6cqw 0; }
+.sheet-gift .gift-tree { padding: .8cqw; gap: 1.8cqw; }
+.sheet-gift .gift-tree img { width: 12cqw; height: 8cqw; }
+.sheet-gift .treename { font-size: 2.3cqw; }
+.sheet-gift .ogham { font-size: 1.9cqw; }
+.sheet-gift .trait { font-size: 1.4cqw; }
+.sheet-gift .kicker { font-size: .95cqw; }
+.sheet-gift .msg { font-size: 1.6cqw; margin-top: .8cqw; max-width: 80%; }
+.sheet-gift .foot { padding-top: .8cqw; }
+.sheet-gift .foot div { font-size: 1.6cqw; }
+.sheet-gift .foot span { font-size: .95cqw; }
+.sheet-gift .how { font-size: 1.25cqw; margin-top: .8cqw; }
+.sheet-gift .fine { font-size: .95cqw; margin-top: .5cqw; }
 
 @media print {
   @page cert { size: A4 landscape; margin: 0; }

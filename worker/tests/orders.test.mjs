@@ -1,0 +1,186 @@
+// Run: node --test worker/tests/orders.test.mjs   (uses Node's built-in SQLite, the same engine as Cloudflare D1)
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import worker from '../src/index.js';
+
+const SCHEMA = fs.readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
+class FakeD1 {
+  constructor() { this.db = new DatabaseSync(':memory:'); this.db.exec(SCHEMA); }
+  prepare(sql) {
+    const st = this.db.prepare(sql);
+    const run = (a) => ({ run: async () => { const r = st.run(...a); return { meta: { changes: Number(r.changes) } }; }, first: async () => st.get(...a) || null, all: async () => ({ results: st.all(...a) }) });
+    return { ...run([]), bind: (...a) => run(a) };
+  }
+}
+const TOKEN = 'T'.repeat(40);
+const SITE = 'https://conorcparis.github.io';
+const mkEnv = (over = {}) => ({ DB: new FakeD1(), ADMIN_TOKEN: TOKEN, ...over });
+const GOOD = { name: 'Aoife Ní Cheallaigh', email: 'Aoife@Example.IE', interests: ['Christmas tree'], tree: 'Hazel · Coll', area: 'D06 W2N8', consent: true };
+const post = (env, body, h = {}) => worker.fetch(new Request('https://api.test/api/reservations', { method: 'POST', headers: { Origin: SITE, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.1.1.1', ...h }, body: typeof body === 'string' ? body : JSON.stringify(body) }), env);
+const admin = (env, path, { method = 'GET', body, token = TOKEN, ip = '9.9.9.9' } = {}) => worker.fetch(new Request('https://api.test' + path, { method, headers: { Origin: SITE, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'CF-Connecting-IP': ip }, body: body ? JSON.stringify(body) : undefined }), env);
+const rows = (env) => env.DB.db.prepare('SELECT * FROM reservations ORDER BY id').all();
+
+test('CORS: only the website may call; preflight answered; strangers refused', async () => {
+  const env = mkEnv();
+  const ok = await worker.fetch(new Request('https://api.test/api/reservations', { method: 'OPTIONS', headers: { Origin: SITE } }), env);
+  assert.equal(ok.status, 204); assert.equal(ok.headers.get('Access-Control-Allow-Origin'), SITE);
+  const bad = await worker.fetch(new Request('https://api.test/api/reservations', { method: 'OPTIONS', headers: { Origin: 'https://evil.example' } }), env);
+  assert.equal(bad.status, 403);
+  assert.equal((await post(env, GOOD, { Origin: 'https://evil.example' })).status, 403);
+  assert.equal((await post(env, GOOD, { Origin: '' })).status, 403);
+  assert.equal(rows(env).length, 0);
+  assert.equal((await post(env, GOOD, { Origin: 'http://localhost:8765' })).status, 403, 'localhost is refused unless ALLOW_LOCAL is set');
+  assert.equal((await post(mkEnv({ ALLOW_LOCAL: '1' }), GOOD, { Origin: 'http://localhost:8765' })).status, 201);
+});
+
+test('a good reservation is stored and answered with a reference', async () => {
+  const env = mkEnv(); const r = await post(env, GOOD); const j = await r.json();
+  assert.equal(r.status, 201); assert.match(j.ref, /^R-[A-Z2-9]{6}$/);
+  const [row] = rows(env);
+  assert.equal(row.ref, j.ref); assert.equal(row.email, 'aoife@example.ie'); assert.equal(row.status, 'new'); assert.equal(row.interests, 'Christmas tree'); assert.equal(row.area, 'D06 W2N8'); assert.ok(row.consent_at);
+});
+
+test('validation: what is required, and what is refused', async () => {
+  const env = mkEnv();
+  const bad = async (over) => { const r = await post(env, { ...GOOD, ...over }, { 'CF-Connecting-IP': String(Math.random()) }); return [r.status, (await r.json()).fields || {}]; };
+  assert.deepEqual(await bad({ name: '  ' }), [400, { name: 'required' }]);
+  assert.equal((await bad({ email: 'nope' }))[1].email, 'invalid');
+  assert.equal((await bad({ email: 'a@b.c' }))[1].email, 'invalid');
+  assert.equal((await bad({ email: 'a b@c.ie' }))[1].email, 'invalid');
+  assert.equal((await bad({ interests: [] }))[1].interests, 'required');
+  assert.equal((await bad({ interests: ['Hack'] }))[1].interests, 'required');
+  assert.equal((await bad({ consent: false }))[1].consent, 'required');
+  assert.equal((await bad({ interests: ['Tree sponsorship'] }))[1].cert_name, 'required');
+  assert.equal((await bad({ interests: ['Gift certificate', 'Christmas tree'], cert_name: '' }))[1].cert_name, 'required');
+  assert.equal((await post(env, { ...GOOD, interests: ['Tree sponsorship'], cert_name: 'Maeve Murphy', cert_from: 'The Murphys', cert_message: 'Merry Christmas' }, { 'CF-Connecting-IP': '5.5.5.5' })).status, 201);
+  assert.equal(rows(env).length, 1, 'only the valid one was stored');
+});
+
+test('input is cleaned and cut to length; markup is stored as plain text, never interpreted', async () => {
+  const env = mkEnv();
+  await post(env, { ...GOOD, name: 'A\u0000B\u0007C ' + 'x'.repeat(200), area: '<script>alert(1)</script>', cert_message: 'line1\nline2' + 'y'.repeat(300), interests: ['Gift certificate'], cert_name: 'Z' });
+  const [r] = rows(env);
+  assert.ok(!/[\u0000-\u0008]/.test(r.name) && r.name.length <= 80); assert.equal(r.area, '<script>alert(1)</script>'.slice(0, 40)); assert.ok(r.cert_message.length <= 160 && !r.cert_message.includes('\n'));
+});
+
+test('a bot (hidden field filled) gets a normal-looking answer and nothing is stored', async () => {
+  const env = mkEnv(); const r = await post(env, { ...GOOD, website: 'http://spam' }); const j = await r.json();
+  assert.equal(r.status, 200); assert.match(j.ref, /^R-/); assert.equal(rows(env).length, 0);
+});
+
+test('bad bodies: too big, not JSON, not an object', async () => {
+  const env = mkEnv();
+  assert.equal((await post(env, 'x'.repeat(9000))).status, 413);
+  assert.equal((await post(env, '{nope')).status, 400);
+  assert.equal((await post(env, '[1,2]')).status, 400);
+  assert.equal((await post(env, 'null')).status, 400);
+});
+
+test('rate limit: 5 an hour from one address, then 429; another address is unaffected; nothing identifying is stored', async () => {
+  const env = mkEnv();
+  for (let i = 0; i < 5; i++) assert.equal((await post(env, { ...GOOD, email: `p${i}@example.ie` }, { 'CF-Connecting-IP': '7.7.7.7' })).status, 201);
+  const r = await post(env, { ...GOOD, email: 'p9@example.ie' }, { 'CF-Connecting-IP': '7.7.7.7' });
+  assert.equal(r.status, 429); assert.equal(r.headers.get('Retry-After'), '3600');
+  assert.equal((await post(env, { ...GOOD, email: 'q1@example.ie' }, { 'CF-Connecting-IP': '8.8.8.8' })).status, 201);
+  const k = env.DB.db.prepare('SELECT key FROM rate').all().map((x) => x.key).join(' ');
+  assert.ok(!k.includes('7.7.7.7') && !k.includes('example.ie'), 'neither the address nor the email is stored, only salted hashes');
+});
+
+test('rate limit: a whole IPv6 /64 counts as one visitor', async () => {
+  const env = mkEnv();
+  for (let i = 0; i < 5; i++) assert.equal((await post(env, { ...GOOD, email: `v${i}@example.ie` }, { 'CF-Connecting-IP': `2001:db8:1:2:${i}::${i + 1}` })).status, 201);
+  assert.equal((await post(env, { ...GOOD, email: 'v9@example.ie' }, { 'CF-Connecting-IP': '2001:db8:1:2:ffff::1' })).status, 429);
+  assert.equal((await post(env, { ...GOOD, email: 'v10@example.ie' }, { 'CF-Connecting-IP': '2001:db8:1:3::1' })).status, 201, 'a different /64 is a different visitor');
+});
+
+test('rate limit: one email address can be used 3 times a day, from any number of addresses', async () => {
+  const env = mkEnv();
+  for (let i = 0; i < 3; i++) assert.equal((await post(env, GOOD, { 'CF-Connecting-IP': `10.0.0.${i}` })).status, 201);
+  assert.equal((await post(env, GOOD, { 'CF-Connecting-IP': '10.0.0.9' })).status, 429);
+  assert.equal(rows(env).length, 3);
+});
+
+test('rate limit: the whole list accepts at most 60 an hour, however many addresses', async () => {
+  const env = mkEnv();
+  for (let i = 0; i < 60; i++) assert.equal((await post(env, { ...GOOD, email: `g${i}@example.ie` }, { 'CF-Connecting-IP': `10.1.${i}.1` })).status, 201);
+  assert.equal((await post(env, { ...GOOD, email: 'g99@example.ie' }, { 'CF-Connecting-IP': '10.1.99.1' })).status, 429);
+});
+
+test('expired limit rows are deleted on the next request', async () => {
+  const env = mkEnv();
+  env.DB.db.prepare('INSERT INTO rate(key, n, exp) VALUES(?, 3, ?)').run('old:row', Math.floor(Date.now() / 1000) - 5);
+  await post(env, GOOD);
+  assert.equal(env.DB.db.prepare("SELECT COUNT(*) c FROM rate WHERE key = 'old:row'").get().c, 0);
+  assert.ok(env.DB.db.prepare('SELECT MAX(exp - ?) m FROM rate').get(Math.floor(Date.now() / 1000)).m <= 86400, 'no row outlives a day');
+});
+
+test('an address that could add a hidden recipient or subject to a mailto: link is refused', async () => {
+  const env = mkEnv(); let i = 0;
+  for (const bad of ['a@b.cc?bcc=evil@x.com', 'a@b.cc&subject=x', 'a=b@c.ie', 'a%40b@c.ie', 'a@b.cc#x', 'a/b@c.ie']) {
+    const r = await post(env, { ...GOOD, email: bad }, { 'CF-Connecting-IP': `11.0.0.${i++}` });
+    assert.equal(r.status, 400, bad); assert.equal((await r.json()).fields.email, 'invalid');
+  }
+  assert.equal(rows(env).length, 0);
+});
+
+test('an oversized body is cut off while it is being read, even with no declared length', async () => {
+  const env = mkEnv();
+  const stream = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('{"name":"' + 'x'.repeat(5000))); c.enqueue(new TextEncoder().encode('y'.repeat(5000) + '"}')); c.close(); } });
+  const r = await worker.fetch(new Request('https://api.test/api/reservations', { method: 'POST', headers: { Origin: SITE, 'Content-Type': 'application/json', 'CF-Connecting-IP': '12.0.0.1' }, body: stream, duplex: 'half' }), env);
+  assert.equal(r.status, 413); assert.equal(rows(env).length, 0);
+});
+
+test('owner routes need the token; a weak or missing server token locks everything', async () => {
+  const env = mkEnv();
+  assert.equal((await admin(env, '/api/admin/reservations', { token: 'wrong' })).status, 401);
+  assert.equal((await worker.fetch(new Request('https://api.test/api/admin/reservations', { headers: { Origin: SITE } }), env)).status, 401);
+  assert.equal((await admin(env, '/api/admin/reservations')).status, 200);
+  assert.equal((await admin(mkEnv({ ADMIN_TOKEN: 'short' }), '/api/admin/reservations', { token: 'short' })).status, 401);
+  assert.equal((await admin(mkEnv({ ADMIN_TOKEN: undefined }), '/api/admin/reservations', { token: '' })).status, 401);
+  const r = await admin(env, '/api/admin/reservations'); assert.equal(r.headers.get('Cache-Control'), 'no-store');
+});
+
+test('lock-out: after 10 wrong tokens from one address, wrong tokens get 429; the right token still works', async () => {
+  const env = mkEnv();
+  for (let i = 0; i < 10; i++) assert.equal((await admin(env, '/api/admin/reservations', { token: 'wrong' + i, ip: '3.3.3.3' })).status, 401);
+  assert.equal((await admin(env, '/api/admin/reservations', { token: 'wrong-again', ip: '3.3.3.3' })).status, 429);
+  assert.equal((await admin(env, '/api/admin/reservations', { ip: '3.3.3.3' })).status, 200, 'the real owner behind a shared address is never locked out');
+  assert.equal((await admin(env, '/api/admin/reservations', { token: 'wrong', ip: '4.4.4.4' })).status, 401);
+});
+
+test('owner: list newest first, filter, change status and notes, erase', async () => {
+  const env = mkEnv(); const refs = [];
+  for (const [n, ip] of [['First Person', '1.0.0.1'], ['Second Person', '1.0.0.2'], ['Third Person', '1.0.0.3']]) {
+    await new Promise((r) => setTimeout(r, 5)); refs.push((await (await post(env, { ...GOOD, name: n, email: n.split(' ')[0].toLowerCase() + '@x.ie' }, { 'CF-Connecting-IP': ip })).json()).ref);
+  }
+  let list = (await (await admin(env, '/api/admin/reservations')).json()).reservations;
+  assert.deepEqual(list.map((r) => r.name), ['Third Person', 'Second Person', 'First Person']);
+  assert.equal((await (await admin(env, '/api/admin/reservations?q=second')).json()).reservations.length, 1);
+  assert.equal((await (await admin(env, '/api/admin/reservations?q=%25')).json()).reservations.length, 3, 'a % in the search is not a wildcard');
+  assert.equal((await admin(env, '/api/admin/reservations/' + refs[0], { method: 'PATCH', body: { status: 'paid', notes: 'Paid by bank transfer' } })).status, 200);
+  assert.equal((await (await admin(env, '/api/admin/reservations?status=paid')).json()).reservations[0].notes, 'Paid by bank transfer');
+  assert.equal((await admin(env, '/api/admin/reservations/' + refs[0], { method: 'PATCH', body: { status: 'bogus' } })).status, 400);
+  assert.equal((await admin(env, '/api/admin/reservations/' + refs[0], { method: 'PATCH', body: {} })).status, 400);
+  assert.equal((await admin(env, '/api/admin/reservations/R-ZZZZZZ', { method: 'PATCH', body: { status: 'paid' } })).status, 404);
+  assert.equal((await admin(env, '/api/admin/reservations/' + refs[1], { method: 'DELETE' })).status, 200);
+  assert.equal((await admin(env, '/api/admin/reservations/' + refs[1], { method: 'DELETE' })).status, 404);
+  assert.equal(rows(env).length, 2);
+  assert.equal((await admin(env, '/api/admin/reservations/not-a-ref', { method: 'DELETE' })).status, 404);
+});
+
+test('CSV export: one row each, quotes escaped, spreadsheet formulas defused', async () => {
+  const env = mkEnv();
+  await post(env, { ...GOOD, name: '=HYPERLINK("http://evil","x")', area: '+cmd|calc' });
+  const r = await admin(env, '/api/admin/export.csv'); const t = await r.text();
+  assert.match(r.headers.get('Content-Type'), /text\/csv/);
+  assert.ok(t.includes(`"'=HYPERLINK(""http://evil"",""x"")"`) && t.includes(`"'+cmd|calc"`), t);
+  assert.equal(t.trim().split('\r\n').length, 2);
+});
+
+test('the admin page never puts reservation data into the page as markup', () => {
+  const js = fs.readFileSync(new URL('../../docs/js/admin.js', import.meta.url), 'utf8');
+  assert.ok(!/innerHTML\s*[+]?=\s*[^;]*\b(r|row|res|reservation|data|d)\./.test(js), 'reservation fields must go in with textContent');
+  assert.ok(!js.includes('eval(') && !js.includes('document.write'));
+});
