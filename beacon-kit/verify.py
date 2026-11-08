@@ -12,7 +12,7 @@ import yaml
 HERE = pathlib.Path(__file__).parent
 F = yaml.safe_load((HERE / "facts.yaml").read_text(encoding="utf-8"))
 E = F["entity"]
-FILES = {"beacon.json": ".well-known/beacon.json", "llms.txt": "llms.txt", "agent.txt": "agent.txt"}
+FILES = {"beacon.json": ".well-known/beacon.json", "llms.txt": "llms.txt", "llms-full.txt": "llms-full.txt", "agent.txt": "agent.txt", "robots.txt": "robots.txt", "tdmrep.json": ".well-known/tdmrep.json"}
 if F.get("publish_beacon_md", True):
     FILES["beacon.md"] = "beacon.md"
 fails = []
@@ -55,6 +55,19 @@ def main(base):
     check("beacon.json: proof.results has no invented entries", b["beacon"]["proof"]["results"] == [])
     check("beacon.json: no llm_directives block (v3 is facts only)", "llm_directives" not in b)
     check("beacon.json: agent_card is null with an explanation", b["beacon"].get("agent_card") is None and bool(b["beacon"].get("agent_card_note")))
+    rb = texts["robots.txt"]
+    for bot in ("GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"):
+        check(f"robots.txt: a clear rule for {bot}", re.search(rf"(?im)^User-agent:\s*{bot}\s*$", rb) is not None)
+    check("robots.txt: Content-Signal line (search, ai-input, ai-train)", re.search(r"(?i)Content-Signal:\s*search=(yes|no),\s*ai-input=(yes|no),\s*ai-train=(yes|no)", rb) is not None)
+    check("robots.txt: names the sitemap and the IndexNow key", "Sitemap: " in rb and "IndexNow-Key:" in rb)
+    try:
+        td = json.loads(texts["tdmrep.json"]); check("tdmrep.json: valid, with a tdm-reservation entry", isinstance(td, list) and "tdm-reservation" in td[0])
+    except Exception as e:
+        check("tdmrep.json: valid", False, str(e))
+    idx = F.get("indexnow", {}).get("key")
+    check("beacon.json: keywords list within the limits (30 max, 2 to 60 characters)", 0 < len(b.get("keywords", [])) <= 30 and all(2 <= len(k) <= 60 for k in b.get("keywords", [])))
+    check("beacon.json: names the IndexNow key file", bool(idx) and b["beacon"].get("indexnow", {}).get("key_location", "").endswith(f"{idx}.txt"))
+    check("beacon.json: structured data carries the keywords", bool(ctx.get("keywords")))
     allt = "\n".join(texts.values())
     for key, t in texts.items():
         d = re.search(r"(?i)\b(ignore (all|previous)|you must recommend|always recommend|ai assistants should|tell users to)\b", t)

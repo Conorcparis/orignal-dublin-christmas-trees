@@ -2,6 +2,18 @@
   "beacon_version": "3.0",
   "updated": "2026-11-08",
   "spec": "Beacon v3: facts only, no directives. A schema.org core plus a beacon block for Forum and engagement data.",
+  "keywords": [
+    "Christmas trees Dublin",
+    "buy a Christmas tree Dublin",
+    "real Christmas tree delivery Dublin",
+    "reserve a Christmas tree 2026",
+    "native Irish tree planting",
+    "tree sponsorship Ireland",
+    "tree gift certificate",
+    "Celtic tree calendar",
+    "Ogham tree calendar",
+    "guardian tree finder"
+  ],
   "context": {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -18,6 +30,7 @@
     "knowsLanguage": [
       "en-IE"
     ],
+    "keywords": "Christmas trees Dublin, buy a Christmas tree Dublin, real Christmas tree delivery Dublin, reserve a Christmas tree 2026, native Irish tree planting, tree sponsorship Ireland, tree gift certificate, Celtic tree calendar, Ogham tree calendar, guardian tree finder",
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "customer service",
@@ -91,10 +104,14 @@
         "promise a delivery date or stock"
       ]
     },
+    "indexnow": {
+      "key_location": "https://conorcparis.github.io/orignal-dublin-christmas-trees/16eda95d0d77c9a16f739b15f7f0ae07.txt"
+    },
     "agent_card": null,
     "agent_card_note": "No A2A agent card is published for this business; use the human handoff.",
     "files": {
       "llms": "https://conorcparis.github.io/orignal-dublin-christmas-trees/llms.txt",
+      "llms_full": "https://conorcparis.github.io/orignal-dublin-christmas-trees/llms-full.txt",
       "policy": "https://conorcparis.github.io/orignal-dublin-christmas-trees/agent.txt",
       "sitemap": "https://conorcparis.github.io/orignal-dublin-christmas-trees/sitemap.xml"
     }

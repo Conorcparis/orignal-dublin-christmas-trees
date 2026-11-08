@@ -25,6 +25,26 @@ profiles:
   facebook: "https://www.facebook.com/p/Dublin-Landscaping-100063761152359/"
   instagram: "https://www.instagram.com/dublinlandscaping/"
 
+keywords:      # 2 to 60 characters each, at most 30: what people type when they look for this business
+  - "Christmas trees Dublin"
+  - "buy a Christmas tree Dublin"
+  - "real Christmas tree delivery Dublin"
+  - "reserve a Christmas tree 2026"
+  - "native Irish tree planting"
+  - "tree sponsorship Ireland"
+  - "tree gift certificate"
+  - "Celtic tree calendar"
+  - "Ogham tree calendar"
+  - "guardian tree finder"
+
+ai_policy:     # what AI systems may do with this site. Search and answer assistants are always allowed so they can find and cite it; training is the owner's choice.
+  search: "yes"
+  ai_input: "yes"
+  ai_train: "no"
+
+indexnow:
+  key: "16eda95d0d77c9a16f739b15f7f0ae07"       # the key file is published at docs/<key>.txt; it is public by design
+
 promises:
   - "The owner confirms each reservation by email."
   - "For every Christmas tree purchased, a native Irish tree is planted."

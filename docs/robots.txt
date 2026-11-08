@@ -1,4 +1,42 @@
+# robots.txt for The Original Dublin Christmas Trees (https://conorcparis.github.io/orignal-dublin-christmas-trees/)
+# Generated from beacon-kit/facts.yaml (same rules as the Brewery's Beacon pack). Edit facts.yaml, not this file.
+# Crawlers read robots.txt at the root of a domain: this file takes full effect once the site has its own domain.
+# ai-train=no is the owner's choice (ai_policy in facts.yaml).
+
+# AI training crawlers
+User-agent: GPTBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+# AI search and answer crawlers (always allowed, so assistants can find and cite this site)
+# ClaudeBot is used by Anthropic for both answers and training; it stays allowed here.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=no
 Allow: /
 
 Sitemap: https://conorcparis.github.io/orignal-dublin-christmas-trees/sitemap.xml
+
+# IndexNow-Key: https://conorcparis.github.io/orignal-dublin-christmas-trees/16eda95d0d77c9a16f739b15f7f0ae07.txt

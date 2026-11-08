@@ -28,11 +28,11 @@ test('canonical, Open Graph, Twitter card, language and viewport are set', () =>
 });
 
 test('every local file the pages point at exists, and nothing loads from another company', () => {
-  for (const page of ['index.html', 'privacy.html', '404.html']) {
+  for (const page of ['index.html', 'privacy.html', '404.html', 'credits.html', 'celtic-tree-calendar.html']) {
     const h = read(page);
     for (const m of h.matchAll(/(?:src|href)="([^"#?]+)"/g)) {
       const u = m[1];
-      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$|https:\/\/www\.cloudflare\.com$|https:\/\/commons\.wikimedia\.org\/wiki\/File:|https:\/\/www\.dublinlandscaping\.ie\/$|https:\/\/www\.facebook\.com\/p\/Dublin-Landscaping-100063761152359\/$|https:\/\/www\.instagram\.com\/dublinlandscaping\/$)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
+      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$|https:\/\/www\.cloudflare\.com$|https:\/\/commons\.wikimedia\.org(\/wiki\/File:.*)?$|https:\/\/creativecommons\.org\/|https:\/\/www\.dublinlandscaping\.ie\/$|https:\/\/www\.facebook\.com\/p\/Dublin-Landscaping-100063761152359\/$|https:\/\/www\.instagram\.com\/dublinlandscaping\/$)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
       if (u.startsWith(BASE)) { assert.ok(fs.existsSync(path.join(DOCS, u.slice(BASE.length) || 'index.html')), `${page}: ${u}`); continue; }
       assert.ok(!/^https?:/.test(u), `${page} loads ${u} from outside the site`);
       assert.ok(fs.existsSync(path.join(DOCS, u === './' ? 'index.html' : u)), `${page}: missing ${u}`);
@@ -153,4 +153,47 @@ test('no secret is in the public repository', () => {
   assert.ok(!fs.existsSync(path.join(ROOT, 'worker', '.admin-key.txt')) || /\.admin-key/.test(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8')), 'the key file must be git-ignored');
   assert.match(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8'), /\.admin-key\.txt/);
   assert.match(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8'), /\.dev\.vars/);
+});
+
+const INDEXED = ['index.html', 'credits.html', 'privacy.html', 'celtic-tree-calendar.html'];
+test('SEO: every indexed page has a right-length title and description, one H1, a canonical and Open Graph tags, and links to three or more other pages', () => {
+  for (const f of INDEXED) {
+    const h = read(f);
+    const title = h.match(/<title>(.*?)<\/title>/)[1], desc = h.match(/name="description" content="(.*?)"/)[1];
+    assert.ok(title.length >= 30 && title.length <= 60, `${f}: title is ${title.length}`);
+    assert.ok(desc.length >= 70 && desc.length <= 160, `${f}: description is ${desc.length}`);
+    assert.equal((h.match(/<h1[ >]/g) || []).length, 1, `${f}: one h1`);
+    assert.ok(h.includes('rel="canonical"'), `${f}: canonical`);
+    for (const k of ['og:title', 'og:description', 'og:image', 'og:url']) assert.ok(h.includes(`property="${k}"`), `${f}: ${k}`);
+    const others = new Set([...h.matchAll(/href="(\.\/|index\.html|credits\.html|privacy\.html|celtic-tree-calendar\.html)(?:#[^"]*)?"/g)].map((m) => m[1] === './' ? 'index.html' : m[1]));
+    others.delete(f);
+    assert.ok(others.size >= 3, `${f} links to ${others.size} other pages`);
+  }
+  for (const f of INDEXED) assert.ok(read('sitemap.xml').includes(f === 'index.html' ? BASE + '</loc>' : BASE + f), `${f} is in the sitemap`);
+});
+
+test('GEO: robots.txt, content signals, TDM rights, llms-full.txt, IndexNow key and keywords are all in place', () => {
+  const rb = read('robots.txt');
+  for (const bot of ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended']) assert.match(rb, new RegExp(`^User-agent: ${bot}$`, 'm'), bot);
+  assert.match(rb, /Content-Signal: search=yes, ai-input=yes, ai-train=(yes|no)/);
+  assert.ok(rb.includes(`Sitemap: ${BASE}sitemap.xml`));
+  const td = JSON.parse(read('.well-known/tdmrep.json'));
+  assert.ok(Array.isArray(td) && 'tdm-reservation' in td[0]);
+  assert.ok(read('llms-full.txt').length > 500 && read('llms.txt').length > 200);
+  const bj = JSON.parse(read('.well-known/beacon.json'));
+  const loc = bj.beacon.indexnow.key_location, key = loc.split('/').pop().replace('.txt', '');
+  assert.equal(read(key + '.txt').trim(), key, 'the IndexNow key file holds its key');
+  assert.ok(rb.includes(`IndexNow-Key: ${loc}`));
+  assert.ok(bj.keywords.length > 0 && bj.keywords.length <= 30 && bj.keywords.every((k) => k.length >= 2 && k.length <= 60));
+  const ld = JSON.parse(read('index.html').match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+  assert.ok(ld['@graph'][0].keywords.includes('Christmas trees Dublin'));
+  assert.ok(Array.isArray(ld['@graph'][0].sameAs) && ld['@graph'][0].sameAs.some((u) => u.includes('dublinlandscaping.ie')));
+});
+
+test('Celtic tree calendar page: 13 trees, each with a photo that exists, an Ogham letter and dates', () => {
+  const c = read('celtic-tree-calendar.html');
+  const secs = [...c.matchAll(/<section id="(\w+)"[^>]*>.*?<img src="(images\/trees\/\w+\.jpg)"/gs)];
+  assert.equal(secs.length, 13);
+  for (const m of secs) assert.ok(fs.existsSync(path.join(DOCS, m[2])), m[2]);
+  assert.ok(c.includes('Ogham letter') && c.includes('Dec 24') && c.includes('Elder'));
 });

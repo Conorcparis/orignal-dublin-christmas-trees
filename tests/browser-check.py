@@ -371,6 +371,17 @@ with sync_playwright() as p:
     ok('admin: no page errors', not adm_errs, str(adm_errs[:2]))
     adm.close()
     # ---------- other pages
+    cal = b.new_page(viewport={'width': 1280, 'height': 900})
+    cal_errs = []
+    cal.on('pageerror', lambda e: cal_errs.append(str(e)))
+    cr = cal.goto(URL + 'celtic-tree-calendar.html', wait_until='networkidle')
+    cal.evaluate("document.querySelectorAll('img[loading=lazy]').forEach(i => { i.loading = 'eager'; })")
+    cal.wait_for_load_state('networkidle')
+    cal.wait_for_timeout(500)
+    ok('celtic-tree-calendar.html: loads, one H1, 13 trees, every photo loads, no errors', cr.status == 200 and cal.locator('h1').count() == 1 and cal.locator('section[id]').count() == 13 and cal.evaluate("[...document.images].every(i => i.complete && i.naturalWidth > 0)") and not cal_errs, str(cal_errs[:2]))
+    ok('celtic-tree-calendar.html: the contents list jumps to each tree', cal.evaluate("[...document.querySelectorAll('nav[aria-label=\"The 13 trees\"] a')].every(a => document.querySelector(a.getAttribute('href')))"))
+    cal.screenshot(path=OUT + '/e2e-calendar.png')
+    cal.close()
     for path, want in [('privacy.html', 'Privacy notice'), ('404.html', 'Page not found')]:
         q = b.new_page(viewport={'width': 1280, 'height': 800})
         e2 = []
