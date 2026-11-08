@@ -25,7 +25,7 @@
     { name: 'Hawthorn', irish: 'Huath', dates: 'May 13 – Jun 9', trait: 'Patience & Fairy Lore', ogham: 'ᚆ', desc: 'The fairy tree of Bealtaine embodies patience, guarded strength, and abundant bloom.' },
     { name: 'Oak', irish: 'Duir', dates: 'Jun 10 – Jul 7', trait: 'Strength & Sanctuary', ogham: 'ᚇ', desc: 'Mighty sovereign of the summer solstice, oak offers unwavering sanctuary, stamina, and enduring wisdom.' },
     { name: 'Holly', irish: 'Tinne', dates: 'Jul 8 – Aug 4', trait: 'Nobility & Resilience', ogham: 'ᚈ', desc: 'Unyielding even in the harshest frost, holly champions noble intent and practical determination.' },
-    { name: 'Hazel', irish: 'Coll', dates: 'Aug 5 – Sep 1', trait: 'Wisdom & Creativity', ogham: 'ᚉ', photo: 'images/hazel-leaves-and-nuts.jpg', desc: 'Keeper of the Well of Segais, the hazel brings analytical sharpness, poetic skill, and profound clarity.' },
+    { name: 'Hazel', irish: 'Coll', dates: 'Aug 5 – Sep 1', trait: 'Wisdom & Creativity', ogham: 'ᚉ', desc: 'Keeper of the Well of Segais, the hazel brings analytical sharpness, poetic skill, and profound clarity.' },
     { name: 'Vine', irish: 'Muin', dates: 'Sep 2 – Sep 29', trait: 'Harvest & Balance', ogham: 'ᚋ', desc: 'Gathering autumn fruitfulness, vine personalities orchestrate balance and sensory appreciation.' },
     { name: 'Ivy', irish: 'Gort', dates: 'Sep 30 – Oct 27', trait: 'Tenacity & Loyalty', ogham: 'ᚌ', desc: 'Climbing through every challenge, ivy exhibits unwavering determination and deep personal loyalty.' },
     { name: 'Reed', irish: 'Ngetal', dates: 'Oct 28 – Nov 24', trait: 'Truth & Expression', ogham: 'ᚍ', desc: 'Flexible yet unbreakable in winter winds, the reed digs deep into underground currents of truth.' },
@@ -64,20 +64,27 @@
     (isOn ? on : off).forEach(function (c) { el.classList.add(c); });
   }
 
-  function treePicture(t) {
-    if (t.photo) {
-      return '<img src="' + t.photo + '" alt="Hazel branch with leaves and green hazelnuts" width="512" height="286" loading="lazy" class="w-full h-full object-cover">' +
-        '<div class="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent"></div>';
+  // Each tree's photo, description and credit live once, on its carousel slide (data-* attributes, written into the page at build time).
+  function slideFor(i) { return document.querySelector('.tree-slide[data-tree="' + i + '"]'); }
+  function treePicture(i, t) {
+    var sl = slideFor(i);
+    if (sl && sl.dataset.photo) {
+      return '<img src="' + esc(sl.dataset.photo) + '" alt="' + esc(sl.dataset.alt) + '" width="' + esc(sl.dataset.photoW) + '" height="' + esc(sl.dataset.photoH) + '" class="w-full h-full object-cover">' +
+        '<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>';
     }
     return '<div class="absolute inset-0 flex items-center justify-center"><span class="text-[110px] leading-none text-secondary-fixed" aria-hidden="true">' + t.ogham + '</span></div>';
+  }
+  function creditLine(i) {
+    var sl = slideFor(i);
+    return sl && sl.dataset.creditUrl ? '<p class="tree-credit mt-2 font-label-mono-xs text-[10px] leading-snug text-on-surface-variant">Photo: <a class="underline" href="' + esc(sl.dataset.creditUrl) + '" rel="noopener">' + esc(sl.dataset.creditAuthor) + '</a>, ' + esc(sl.dataset.creditLicense) + '</p>' : '';
   }
 
   function showTree(i, opts) {
     var t = TREES[i]; if (!t || !spotlight) return;
     spotlight.innerHTML =
       '<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">' +
-        '<div class="lg:col-span-5"><div class="relative rounded-xl overflow-hidden shadow-md h-72 bg-primary">' + treePicture(t) +
-          '<div class="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[#004B87] font-bold font-label-mono-xs text-label-mono-xs shadow-sm flex items-center gap-1.5"><span class="text-[14px]" aria-hidden="true">' + t.ogham + '</span> Ogham letter ' + esc(t.irish) + '</div></div></div>' +
+        '<div class="lg:col-span-5"><div class="relative rounded-xl overflow-hidden shadow-md h-72 bg-primary">' + treePicture(i, t) +
+          '<div class="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[#004B87] font-bold font-label-mono-xs text-label-mono-xs shadow-sm flex items-center gap-1.5"><span class="text-[14px]" aria-hidden="true">' + t.ogham + '</span> Ogham letter ' + esc(t.irish) + '</div></div>' + creditLine(i) + '</div>' +
         '<div class="lg:col-span-7 flex flex-col gap-3.5">' +
           '<div class="flex flex-wrap items-center gap-2"><span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-mono-xs text-label-mono-xs font-bold uppercase tracking-wider">Guardian tree sign</span>' +
             '<span class="px-3 py-1 rounded-full bg-[#004B87]/10 text-[#004B87] font-label-mono-xs text-label-mono-xs font-semibold">' + esc(t.dates) + '</span>' +
@@ -89,7 +96,7 @@
           '<a class="px-5 py-3 rounded-lg bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high transition-colors" href="#sponsor">View certificate preview</a></div>' +
         '</div></div>';
     $$('.zodiac-pill').forEach(function (b) { var on = +b.dataset.tree === i; swap(b, PILL_ON, PILL_OFF, on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-    $$('.calendar-tree-card').forEach(function (c) { swap(c, CARD_ON, CARD_OFF, +c.dataset.tree === i); c.setAttribute('aria-pressed', +c.dataset.tree === i ? 'true' : 'false'); });
+    $$('.calendar-tree-card, .tree-slide').forEach(function (c) { swap(c, CARD_ON, CARD_OFF, +c.dataset.tree === i); c.setAttribute('aria-pressed', +c.dataset.tree === i ? 'true' : 'false'); });
     if (opts && opts.scroll) spotlight.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
   }
 
@@ -110,6 +117,20 @@
     c.addEventListener('click', function () { showTree(+c.dataset.tree, { scroll: true }); });
     c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showTree(+c.dataset.tree, { scroll: true }); } });
   });
+
+  /* ---------- carousel of all 13 trees ---------- */
+  var track = $('#tree-carousel-track'), prevBtn = $('#carousel-prev'), nextBtn = $('#carousel-next');
+  if (track && prevBtn && nextBtn) {
+    var cardStep = function () { var f = track.firstElementChild; return f ? f.getBoundingClientRect().width + 16 : 300; };
+    var syncArrows = function () { prevBtn.disabled = track.scrollLeft <= 2; nextBtn.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2; };
+    var page = function (dir) { track.scrollBy({ left: dir * cardStep() * Math.max(1, Math.floor(track.clientWidth / cardStep())), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
+    prevBtn.addEventListener('click', function () { page(-1); });
+    nextBtn.addEventListener('click', function () { page(1); });
+    track.addEventListener('scroll', syncArrows, { passive: true });
+    window.addEventListener('resize', syncArrows);
+    $$('.tree-slide').forEach(function (b) { b.addEventListener('click', function () { showTree(+b.dataset.tree, { scroll: true }); }); });
+    syncArrows();
+  }
 
   /* ---------- 3: "Sponsor the X tree" fills the form ---------- */
   var treeSel = $('#tree-sign-select');

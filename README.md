@@ -15,6 +15,10 @@ Live (GitHub Pages, served from `/docs`): https://conorcparis.github.io/orignal-
 | `tests/` | `site.test.mjs` (fast checks, `npm test`) and `browser-check.py` (clicks everything in a real browser). |
 | `DESIGN.md` | The design tokens exported from the design tool. |
 
+## Tree photos
+
+The 13 tree photos (carousel and guardian-tree finder) come from Wikimedia Commons under free licences. `src/photo-credits.json` holds the author, licence and source link for each; the carousel, the finder and `docs/credits.html` all read from it. To swap a photo, replace `docs/images/trees/<tree>.jpg`, update its record, and rebuild the page. The hero and woodland pictures are illustrative and should be replaced with real photographs.
+
 ## Everyday jobs
 
 ```

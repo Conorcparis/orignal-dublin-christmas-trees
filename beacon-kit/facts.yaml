@@ -59,7 +59,7 @@ confirm:
   - "Service claims: 'Dublin Metro free delivery', 'zero-emission drop-offs', deliveries starting the last week of November, 'Zero-Drop Guarantee', annual canopy growth reports, parchment certificate on recycled linen."
   - "Tree varieties: 'Nordmann Fir or Fraser Fir' and 'hand-cut' (what is actually sold this year)."
   - "Prices, stock, delivery areas and delivery dates: none are published on the site."
-  - "Pictures: the hero and woodland pictures come from the design tool and are illustrative. Replace them with real photographs of the trees and the planting site."
+  - "Pictures: the hero and woodland pictures come from the design tool and are illustrative. Replace them with real photographs of the trees and the planting site. The 13 tree photos are Wikimedia Commons photos under CC licences, credited on credits.html; your own photographs of each tree would be better."
   - "Where the site lives: the GitHub Pages address is temporary. A beacon is read at the domain root (/.well-known/beacon.json), so registering it on the Digital Forum needs its own domain."
   - "Form service: reservations go through FormSubmit (free, no account). The owner must click the confirmation email FormSubmit sends on the first submission. FormSubmit publishes no operator, location or data-processing terms, so a GDPR data-processing agreement is not available: decide whether that is acceptable, or switch to a service that states one (the address is one line in docs/js/site.js)."
   - "Digital Forum registration: profile, attestation, verification token and feed URLs are issued by the Forum on registration; add them under profiles: then."

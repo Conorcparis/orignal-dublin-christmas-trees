@@ -32,7 +32,7 @@ test('every local file the pages point at exists, and nothing loads from another
     const h = read(page);
     for (const m of h.matchAll(/(?:src|href)="([^"#?]+)"/g)) {
       const u = m[1];
-      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
+      if (/^(mailto:|https:\/\/www\.dataprotection\.ie|https:\/\/formsubmit\.co$|https:\/\/commons\.wikimedia\.org\/wiki\/File:)/.test(u)) continue;   // plain links the visitor can follow; nothing is loaded from them
       if (u.startsWith(BASE)) { assert.ok(fs.existsSync(path.join(DOCS, u.slice(BASE.length) || 'index.html')), `${page}: ${u}`); continue; }
       assert.ok(!/^https?:/.test(u), `${page} loads ${u} from outside the site`);
       assert.ok(fs.existsSync(path.join(DOCS, u === './' ? 'index.html' : u)), `${page}: missing ${u}`);
@@ -78,4 +78,27 @@ test('guardian tree finder: 28 boundary dates give the right tree', () => {
 
 test('published claims stay out of the beacon until the owner confirms them', () => {
   for (const f of ['.well-known/beacon.json', 'llms.txt', 'agent.txt']) assert.ok(!/1,480|20 years|civic partnership|BATCH CERTIFIED|Sustainable Forestry|zero-emission|2035/i.test(read(f)), f);
+});
+
+test('carousel: 13 slides in calendar order, each with an existing, described, credited photo', () => {
+  const { TREES } = require('../docs/js/site.js');
+  const slides = [...html.matchAll(/<button type="button" class="tree-slide[^>]*data-tree="(\d+)" data-photo="([^"]+)"[^>]*data-alt="([^"]+)" data-credit-author="([^"]+)" data-credit-license="([^"]+)" data-credit-url="(https:\/\/commons\.wikimedia\.org[^"]+)">/g)];
+  assert.equal(slides.length, 13);
+  slides.forEach((m, i) => {
+    assert.equal(+m[1], i);
+    assert.ok(fs.existsSync(path.join(DOCS, m[2])), `${m[2]} is missing`);
+    assert.ok(m[3].length > 15, `alt too short for slide ${i}`);
+    assert.match(m[5], /^(CC BY(-SA)? [0-9.]+|CC0)/, `licence for slide ${i}`);
+    assert.ok(html.includes(`aria-label="${TREES[i].name}, ${i + 1} of 13"`), `slide label ${TREES[i].name}`);
+  });
+  assert.ok(html.includes('aria-roledescription="carousel"') && html.includes('id="carousel-prev"') && html.includes('id="carousel-next"'));
+});
+
+test('credits page names the photographer and licence for all 13 photos, and is in the sitemap', () => {
+  const c = read('credits.html');
+  assert.equal((c.match(/<li class="flex/g) || []).length, 13);
+  assert.equal((c.match(/Original on Wikimedia Commons/g) || []).length, 13);
+  assert.ok(read('sitemap.xml').includes('credits.html'));
+  assert.ok(html.includes('href="credits.html"'));
+  for (const f of fs.readdirSync(path.join(DOCS, 'images', 'trees'))) assert.ok(c.includes(`images/trees/${f}`), `${f} is not credited`);
 });

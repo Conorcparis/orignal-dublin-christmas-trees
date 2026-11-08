@@ -29,6 +29,9 @@ with sync_playwright() as p:
     fonts = pg.evaluate("Promise.all([document.fonts.load('600 40px \"Playfair Display\"'),document.fonts.load('400 16px \"Plus Jakarta Sans\"'),document.fonts.load('500 12px \"JetBrains Mono\"'),document.fonts.load('24px \"Material Symbols Outlined\"')]).then(a=>a.map(x=>x.length))")
     ok('all four self-hosted fonts load', all(n > 0 for n in fonts), str(fonts))
     ok('Ogham letters have a font (no empty boxes)', pg.evaluate("document.fonts.load('16px \"Noto Sans Ogham\"', '\\u1681').then(a=>a.length)") > 0)
+    pg.evaluate("document.querySelectorAll('img[loading=lazy]').forEach(i => { i.loading = 'eager'; })")   # pictures far off-screen load on demand; wake them so every file is checked
+    pg.wait_for_load_state('networkidle')
+    pg.wait_for_timeout(500)
     imgs = pg.evaluate("[...document.images].map(i=>({src:i.getAttribute('src'),ok:i.complete&&i.naturalWidth>0,alt:i.getAttribute('alt')}))")
     ok('every image loads', all(i['ok'] for i in imgs), str([i['src'] for i in imgs if not i['ok']]))
     ok('every image has an alt attribute', all(i['alt'] is not None for i in imgs))
@@ -57,6 +60,42 @@ with sync_playwright() as p:
     ok('February offers 29 days, not 31', pg.evaluate("document.querySelector('#birth-day').options.length") == 29)
     pg.select_option('#birth-month', '4')
     ok('April offers 30 days', pg.evaluate("document.querySelector('#birth-day').options.length") == 30)
+    # ---------- carousel and photos
+    names = ['Birch', 'Rowan', 'Ash', 'Alder', 'Willow', 'Hawthorn', 'Oak', 'Holly', 'Hazel', 'Vine', 'Ivy', 'Reed', 'Elder']
+    pg.locator('#tree-carousel').scroll_into_view_if_needed()
+    ok('carousel: 13 slides', pg.locator('.tree-slide').count() == 13)
+    ok('carousel: starts at the first tree, Previous is disabled', pg.is_disabled('#carousel-prev') and pg.is_enabled('#carousel-next'))
+    x0 = pg.evaluate("document.querySelector('#tree-carousel-track').scrollLeft")
+    pg.click('#carousel-next')
+    pg.wait_for_timeout(900)
+    x1 = pg.evaluate("document.querySelector('#tree-carousel-track').scrollLeft")
+    ok('carousel: Next scrolls forward and enables Previous', x1 > x0 + 100 and pg.is_enabled('#carousel-prev'), f'{x0} -> {x1}')
+    for _ in range(8):
+        if pg.is_disabled('#carousel-next'):
+            break
+        pg.click('#carousel-next')
+        pg.wait_for_timeout(700)
+    ok('carousel: reaches the last tree and disables Next', pg.is_disabled('#carousel-next') and pg.evaluate("(() => { const t = document.querySelector('#tree-carousel-track'); const l = t.lastElementChild.getBoundingClientRect(); return l.right <= t.getBoundingClientRect().right + 2; })()"))
+    pg.click('#carousel-prev')
+    pg.wait_for_timeout(900)
+    ok('carousel: Previous scrolls back', pg.evaluate("document.querySelector('#tree-carousel-track').scrollLeft") < pg.evaluate("document.querySelector('#tree-carousel-track').scrollWidth") - 500)
+    bad = []
+    for i, name in enumerate(names):
+        pg.evaluate("document.querySelectorAll('.tree-slide')[%d].scrollIntoView({block:'nearest',inline:'center'})" % i)
+        pg.click('.tree-slide[data-tree="%d"]' % i)
+        pg.wait_for_timeout(120)
+        title = pg.inner_text('#tree-spotlight h3').split('.')[0].split('\u00b7')[0].strip()
+        loaded = pg.evaluate("(() => { const im = document.querySelector('#tree-spotlight img'); return !!im && im.complete && im.naturalWidth > 0; })()")
+        credit = pg.evaluate("(() => { const a = document.querySelector('#tree-spotlight .tree-credit a'); return a ? a.href : ''; })()")
+        alt = pg.evaluate("(document.querySelector('#tree-spotlight img') || {}).alt || ''")
+        if title != name or not loaded or 'commons.wikimedia.org' not in credit or len(alt) < 15 or pg.get_attribute('.tree-slide[data-tree="%d"]' % i, 'aria-pressed') != 'true':
+            bad.append(f'{name}: title={title} loaded={loaded} credit={credit[:30]} alt={alt[:20]}')
+    ok('all 13 trees: slide click shows that tree with its own loaded photo, alt text and credit link', not bad, str(bad))
+    pg.screenshot(path=OUT + '/e2e-carousel.png')
+    q = b.new_page(viewport={'width': 1280, 'height': 800})
+    r = q.goto(URL + 'credits.html', wait_until='networkidle')
+    ok('credits.html loads and lists 13 photos, all images load', r.status == 200 and q.locator('li img').count() == 13 and q.evaluate("[...document.images].every(i => i.complete && i.naturalWidth > 0)"))
+    q.close()
     # ---------- chips and cards
     pg.click('.zodiac-pill[data-tree="6"]')
     ok('chip click shows Oak and marks only it pressed', 'Oak' in pg.inner_text('#tree-spotlight h3') and pg.get_attribute('.zodiac-pill[data-tree="6"]', 'aria-pressed') == 'true' and pg.get_attribute('.zodiac-pill[data-tree="8"]', 'aria-pressed') == 'false')
@@ -64,9 +103,9 @@ with sync_playwright() as p:
     pg.keyboard.press('Enter')
     ok('card + Enter key shows Alder', 'Alder' in pg.inner_text('#tree-spotlight h3'))
     pg.click('.zodiac-pill[data-tree="8"]')
-    ok('Hazel shows its real photo', pg.evaluate("!!document.querySelector('#tree-spotlight img')"))
+    ok('Hazel shows its own photo', pg.evaluate("(document.querySelector('#tree-spotlight img') || {src: ''}).src.includes('/trees/hazel.jpg')"))
     pg.click('.zodiac-pill[data-tree="6"]')
-    ok('other trees do not borrow the hazel photo', not pg.evaluate("!!document.querySelector('#tree-spotlight img')"))
+    ok('Oak shows its own photo, not the hazel one', pg.evaluate("(document.querySelector('#tree-spotlight img') || {src: ''}).src.includes('/trees/oak.jpg')"))
     pg.screenshot(path=OUT + '/e2e-spotlight-oak.png')
     pg.click('#tree-spotlight a[data-sponsor-tree]')
     ok('Sponsor button selects that tree in the form and ticks sponsorship', pg.input_value('#tree-sign-select') == 'oak' and pg.is_checked('input[value="Tree sponsorship"]') and not pg.is_checked('input[value="Christmas tree"]'))
