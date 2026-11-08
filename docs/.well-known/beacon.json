@@ -22,7 +22,7 @@
     "description": "Reserve a Christmas tree in Dublin. For every tree bought, a native Irish tree is planted. A Christmas tree seller serving Dublin, Ireland.",
     "url": "https://conorcparis.github.io/orignal-dublin-christmas-trees/",
     "logo": "https://conorcparis.github.io/orignal-dublin-christmas-trees/images/logo-512.png",
-    "email": "romacsweeney@gmail.com",
+    "email": "theoriginaldublinchristmastree@gmail.com",
     "areaServed": {
       "@type": "AdministrativeArea",
       "name": "Dublin, Ireland"
@@ -34,7 +34,7 @@
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "customer service",
-      "email": "romacsweeney@gmail.com",
+      "email": "theoriginaldublinchristmastree@gmail.com",
       "areaServed": "IE",
       "availableLanguage": [
         "English"
@@ -96,7 +96,7 @@
       "note": "No customers, partners, certifications or awards are announced."
     },
     "engage": {
-      "human_handoff": "mailto:romacsweeney@gmail.com",
+      "human_handoff": "mailto:theoriginaldublinchristmastree@gmail.com",
       "reservation_form": "https://conorcparis.github.io/orignal-dublin-christmas-trees/#signup-form",
       "agent_may_not": [
         "confirm a reservation",

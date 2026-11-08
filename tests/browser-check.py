@@ -231,10 +231,10 @@ with sync_playwright() as p:
         summ = pg.input_value('#form-summary')
         href = pg.get_attribute('#form-mail-again', 'href') or ''
         ok(f'{label}: falls back to the email app with the request written out', 'One more step' in pg.inner_text('#form-success-title') and 'We could not send it' in pg.inner_text('#form-success-text')
-           and all(x in summ for x in ['Aoife Ní Cheallaigh', 'aoife@example.ie', 'D06 W2N8']) and href.startswith('mailto:romacsweeney@gmail.com?subject=') and 'body=' in href, summ[:80])
+           and all(x in summ for x in ['Aoife Ní Cheallaigh', 'aoife@example.ie', 'D06 W2N8']) and href.startswith('mailto:theoriginaldublinchristmastree@gmail.com?subject=') and 'body=' in href, summ[:80])
         gm = pg.get_attribute('#form-gmail', 'href') or ''
         ou = pg.get_attribute('#form-outlook', 'href') or ''
-        ok(f'{label}: Gmail and Outlook buttons carry the recipient, subject and request', gm.startswith('https://mail.google.com/mail/?view=cm') and 'to=romacsweeney%40gmail.com' in gm and 'Aoife' in gm and ou.startswith('https://outlook.live.com/mail/0/deeplink/compose') and 'to=romacsweeney%40gmail.com' in ou and 'Aoife' in ou and pg.is_visible('#form-gmail') and pg.is_visible('#form-outlook'))
+        ok(f'{label}: Gmail and Outlook buttons carry the recipient, subject and request', gm.startswith('https://mail.google.com/mail/?view=cm') and 'to=theoriginaldublinchristmastree%40gmail.com' in gm and 'Aoife' in gm and ou.startswith('https://outlook.live.com/mail/0/deeplink/compose') and 'to=theoriginaldublinchristmastree%40gmail.com' in ou and 'Aoife' in ou and pg.is_visible('#form-gmail') and pg.is_visible('#form-outlook'))
         pg.click('#form-copy')
         ok(f'{label}: copy button responds', pg.inner_text('#form-copy') in ('Copied', 'Press Ctrl+C'))
     pg.screenshot(path=OUT + '/e2e-form-fallback.png')
@@ -273,7 +273,7 @@ with sync_playwright() as p:
     q.fill('#f-covers', 'One native Irish tree')
     q.fill('#f-until', '2027-12-31')
     sh = q.inner_text('#sheet')
-    ok('gift card preview: for, what it covers, choose-your-own-tree, voucher number, valid until, how to redeem', all(x in sh for x in ['Gift Card', 'Maeve Murphy', 'One native Irish tree', 'Choose your own', '2026-001', '31 December 2027', 'romacsweeney@gmail.com']), sh[:140])
+    ok('gift card preview: for, what it covers, choose-your-own-tree, voucher number, valid until, how to redeem', all(x in sh for x in ['Gift Card', 'Maeve Murphy', 'One native Irish tree', 'Choose your own', '2026-001', '31 December 2027', 'theoriginaldublinchristmastree@gmail.com']), sh[:140])
     long_msg = 'Merry Christmas and a very happy new year to you and all the family, with all our love from everyone. ' * 2
     long_name = 'Aoife Ní Cheallaigh-Fitzgerald Mac Giolla Phádraig'
     for kind in ('cert', 'gift'):

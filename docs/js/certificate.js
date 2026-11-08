@@ -7,7 +7,7 @@
   'use strict';
   if (typeof document === 'undefined') return;
 
-  var EMAIL = 'romacsweeney@gmail.com', SITE = 'conorcparis.github.io/orignal-dublin-christmas-trees';
+  var EMAIL = 'theoriginaldublinchristmastree@gmail.com', SITE = 'conorcparis.github.io/orignal-dublin-christmas-trees';
   var $ = function (s) { return document.querySelector(s); };
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sheet = $('#sheet'), form = $('#maker'), treeSel = $('#f-tree');

@@ -51,7 +51,7 @@ test('every image has an alt attribute; photos describe what they show', () => {
 test('JSON-LD parses and describes the organisation without invented facts', () => {
   const ld = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
   assert.deepEqual(ld['@graph'].map((x) => x['@type']), ['Organization', 'WebSite', 'WebPage']);
-  assert.equal(ld['@graph'][0].email, 'romacsweeney@gmail.com');
+  assert.equal(ld['@graph'][0].email, 'theoriginaldublinchristmastree@gmail.com');
   assert.ok(!/1,480|20 years|rating|aggregate/i.test(JSON.stringify(ld)));
 });
 

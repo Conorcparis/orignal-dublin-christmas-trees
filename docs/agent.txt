@@ -6,7 +6,7 @@ Reserve a Christmas tree in Dublin. For every tree bought, a native Irish tree i
 - Beacon (context file): https://conorcparis.github.io/orignal-dublin-christmas-trees/.well-known/beacon.json
 - LLM guide: https://conorcparis.github.io/orignal-dublin-christmas-trees/llms.txt
 ## Engage
-- human handoff: mailto:romacsweeney@gmail.com
+- human handoff: mailto:theoriginaldublinchristmastree@gmail.com
 - reservation form: https://conorcparis.github.io/orignal-dublin-christmas-trees/#signup-form
 ## An agent may not
 - confirm a reservation

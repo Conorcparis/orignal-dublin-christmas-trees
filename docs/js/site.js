@@ -9,7 +9,7 @@
 (function () {
   'use strict';
 
-  var EMAIL = 'romacsweeney@gmail.com';
+  var EMAIL = 'theoriginaldublinchristmastree@gmail.com';
   // Reservations are sent to the owner by FormSubmit (formsubmit.co), a free form-to-email service: no account and no key.
   // The first submission makes FormSubmit email the owner once to confirm the address; submissions sent before that are held and delivered after it.
   // If the service cannot be reached, the form falls back to opening the visitor's own email app with the request written out.

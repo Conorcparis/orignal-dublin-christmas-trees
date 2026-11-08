@@ -26,5 +26,5 @@ Status: Taking reservations for Christmas 2026.
 - sitemap: https://conorcparis.github.io/orignal-dublin-christmas-trees/sitemap.xml
 
 ## Contact
-- romacsweeney@gmail.com
+- theoriginaldublinchristmastree@gmail.com
 - Reservation form: https://conorcparis.github.io/orignal-dublin-christmas-trees/#signup-form
