@@ -32,7 +32,7 @@ The owner signs in at `docs/admin.html` (on the site, not linked or indexed) wit
 
 ## Logo
 
-The round badge (`docs/images/logo-*.png`, original in `src/original-images/logo-original.png`) is the site logo, favicon, app icon, social-sharing image and certificate emblem. `docs/images/dublin-city-crest.png` is no longer used and can be deleted.
+The round badge (`docs/images/logo-*.png`, original in `src/original-images/logo-original.png`) is the site logo, favicon, app icon, social-sharing image and certificate emblem.
 
 ## Links
 
