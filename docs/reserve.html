@@ -142,6 +142,12 @@
   var last = 0, send = function () { var h = Math.ceil(document.body.getBoundingClientRect().height); if (h !== last) { last = h; window.parent.postMessage({ dctReserveHeight: h }, '*'); } };
   window.addEventListener('load', send); window.addEventListener('resize', send);
   if (window.ResizeObserver) new ResizeObserver(send).observe(document.body); else setInterval(send, 500);
+  // The certificate box on the same Webador page (src/sponsor-embed-webador.html) can ask for Sponsorship or Gift to be ticked.
+  var OK = ['Tree sponsorship', 'Gift certificate'];
+  window.addEventListener('message', function (e) {
+    if (e.source !== window.parent || !e.data || OK.indexOf(e.data.dctInterest) < 0) return;
+    document.querySelectorAll('input[name="interest"]').forEach(function (b) { b.checked = b.value === e.data.dctInterest; b.dispatchEvent(new Event('change')); });
+  });
 })();
 </script>
 </body></html>

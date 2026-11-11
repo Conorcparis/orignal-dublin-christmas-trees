@@ -1,0 +1,23 @@
+<!-- The Original Dublin Christmas Trees: tree certificate box ("Give a Gift That Keeps Growing" + sample certificate). Paste into a Webador "Embed code" / HTML block.
+     It shows docs/sponsor.html from the main site. The frame resizes itself to fit.
+     "Sponsor a Tree" / "Gift a Sponsorship": if the reservation box (reserve-embed-webador.html) is on the same Webador page, it scrolls there and ticks
+     Sponsorship or Gift; if not, it opens the reservation form on the main site. -->
+<div id="dct-sponsor-embed" style="width:100%;max-width:100%;margin:0;padding:0">
+  <iframe id="dct-sponsor-frame" src="https://conorcparis.github.io/orignal-dublin-christmas-trees/sponsor.html" title="Sponsor a Tree: certificate"
+    style="display:block;width:100%;height:1100px;border:0;margin:0;overflow:hidden" scrolling="no"></iframe>
+</div>
+<script>
+(function () {
+  var SITE = 'https://conorcparis.github.io', frame = document.getElementById('dct-sponsor-frame');
+  window.addEventListener('message', function (e) {
+    if (e.origin !== SITE || e.source !== frame.contentWindow || !e.data) return;
+    if (typeof e.data.dctSponsorHeight === 'number') frame.style.height = Math.max(400, Math.min(6000, e.data.dctSponsorHeight)) + 'px';
+    if (e.data.dctGoto === 'signup') {
+      var box = document.getElementById('dct-reserve-embed'), rf = document.getElementById('dct-reserve-frame');
+      if (!box || !rf) { window.location.href = SITE + '/orignal-dublin-christmas-trees/#signup-form'; return; }
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      rf.contentWindow.postMessage({ dctInterest: e.data.interest }, SITE);
+    }
+  });
+})();
+</script>
