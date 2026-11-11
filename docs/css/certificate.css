@@ -1,7 +1,7 @@
 /* Printable sheets for the certificate and gift card maker. Sizes use container units, so the preview on screen and the printed page look the same. */
 .sheet { container-type: inline-size; background: #fffdf6; color: #191c19; box-shadow: 0 6px 30px rgba(0, 0, 0, .15); border-radius: 4px; width: 100%; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
-.sheet-cert { aspect-ratio: 297 / 210; page: cert; }
-.sheet-gift { aspect-ratio: 210 / 148; page: gift; }
+.sheet-cert { aspect-ratio: 297 / 210; }
+.sheet-gift { aspect-ratio: 210 / 148; }
 .sheet .frame { position: relative; height: 100%; padding: 3.4cqw 5cqw; border: .5cqw double #1c3a2c; outline: .25cqw solid #b79a4a; outline-offset: -1.6cqw; display: flex; flex-direction: column; align-items: center; text-align: center; background: radial-gradient(ellipse at top, #fffef9, #fbf6e6); }
 .sheet .brand { display: flex; flex-direction: column; align-items: center; gap: .6cqw; font-family: 'JetBrains Mono', monospace; font-size: 1.6cqw; letter-spacing: .18em; text-transform: uppercase; color: #1c3a2c; }
 .sheet .brand .logo { width: 9cqw; height: 9cqw; }
@@ -25,6 +25,13 @@
 .sheet .blank { display: inline-block; border-bottom: .2cqw solid #727973; height: 2.2cqw; }
 .sheet .fine { font-size: 1.15cqw; color: #727973; margin: 1.1cqw 0 0; }
 .sheet .how { font-size: 1.5cqw; color: #424844; margin: 1.2cqw 0 0; }
+/* the astrology certificate: the Celtic wheel (its white background melts into the paper) beside the birth-tree details */
+.sheet .astro-row { display: flex; align-items: center; justify-content: center; gap: 3.5cqw; margin: .6cqw 0 .2cqw; }
+.sheet .astro-row .wheel { height: 27cqw; width: auto; mix-blend-mode: multiply; flex: none; }
+.sheet .astro-row .treebox { max-width: 48cqw; }
+.sheet .astro-row .ogham { font-size: 4.2cqw; margin: .3cqw 0; }
+.sheet .born { font-size: 1.9cqw; color: #424844; margin: -.6cqw 0 0; }
+.sheet .astro-note { font-size: 1.6cqw; }
 
 /* the gift card is a smaller sheet (A5), so everything on it is tighter */
 .sheet-gift .frame { padding: 3cqw 4cqw; }
@@ -33,6 +40,8 @@
 .sheet-gift h2 { font-size: 4cqw; margin: .8cqw 0 .2cqw; }
 .sheet-gift .lead { font-size: 1.6cqw; }
 .sheet-gift .name { font-size: 3.4cqw; margin: .3cqw 0 .5cqw; min-height: 4cqw; }
+.sheet .amount { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 7cqw; line-height: 1; color: #6f001c; margin: .6cqw 0 .2cqw; }
+.sheet-gift .amount { font-size: 6.4cqw; margin: .3cqw 0 .1cqw; }
 .sheet-gift .covers { font-size: 2.1cqw; margin: .2cqw 0 .7cqw; }
 .sheet-gift .choose { font-size: 1.7cqw; margin: .6cqw 0; }
 .sheet-gift .gift-tree { padding: .8cqw; gap: 1.8cqw; }
@@ -49,13 +58,14 @@
 .sheet-gift .fine { font-size: .95cqw; margin-top: .5cqw; }
 
 @media print {
-  @page cert { size: A4 landscape; margin: 0; }
-  @page gift { size: A5 landscape; margin: 0; }
+  /* One plain page rule (named pages are ignored by some browsers). Margin 0 also stops the browser printing its own date, title and address at the edges.
+     The gift card switches the paper to A5 from certificate.js just before printing. */
+  @page { size: A4 landscape; margin: 0; }
   html, body { background: #fff !important; }
   .no-print { display: none !important; }
   main, .layout { padding: 0 !important; margin: 0 !important; max-width: none !important; display: block !important; }
   .sheet { box-shadow: none; border-radius: 0; }
-  .sheet-cert { width: 297mm; height: 210mm; }
-  .sheet-gift { width: 210mm; height: 148mm; }
+  .sheet-cert { width: 297mm; height: 209.5mm; break-inside: avoid; }
+  .sheet-gift { width: 210mm; height: 147.5mm; break-inside: avoid; }
   .sheet, .sheet * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

@@ -33,6 +33,8 @@
 #dct-sponsor .o-status{min-height:1.3em;font-size:14px;color:#9B1C1C;margin:0}
 #dct-sponsor .o-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 #dct-sponsor .o-hide{display:none!important}
+#dct-sponsor .o-astro{display:none}
+#dct-sponsor.is-astro .o-astro{display:grid}
 #dct-sponsor .o-tech{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--o-muted);margin:14px 0 0;overflow-wrap:anywhere}
 /* done */
 #dct-sponsor .o-done{text-align:center;padding:12px 0}
@@ -68,20 +70,25 @@
           <label for="dct-o-tree">Celtic tree</label>
           <select id="dct-o-tree" name="tree">
               <option value="">Not sure: choose for me</option>
-              <option>Birch &middot; Beith (New Beginnings)</option>
-              <option>Rowan &middot; Luis (Vision &amp; Insight)</option>
-              <option>Ash &middot; Nion (Spiritual Depth)</option>
-              <option>Alder &middot; Fearn (Courage)</option>
-              <option>Willow &middot; Saille (Intuition)</option>
-              <option>Hawthorn &middot; Huath (Patience)</option>
-              <option>Oak &middot; Duir (Strength &amp; Shelter)</option>
-              <option>Holly &middot; Tinne (Honour &amp; Nobility)</option>
-              <option>Hazel &middot; Coll (Wisdom &amp; Creativity)</option>
-              <option>Vine &middot; Muin (Harmony)</option>
-              <option>Ivy &middot; Gort (Resilience)</option>
-              <option>Reed &middot; Ngetal (Clarity)</option>
-              <option>Elder &middot; Ruis (Restoration)</option>
+              <option>Birch &middot; Beith (Renewal, purification and new beginnings)</option>
+              <option>Rowan &middot; Luis (Vision, intuition and inspiration)</option>
+              <option>Ash &middot; Nion (Connection, balance and inner depth)</option>
+              <option>Alder &middot; Fearn (Momentum, strength and adaptability)</option>
+              <option>Willow &middot; Saille (Calm, intuition and observation)</option>
+              <option>Hawthorn &middot; Huath (Secretive, passionate and illusionary)</option>
+              <option>Oak &middot; Duir (Loyalty, generosity and stability)</option>
+              <option>Holly &middot; Tinne (Confidence, nobility and leadership)</option>
+              <option>Hazel &middot; Coll (Intelligence, reserve and inner knowledge)</option>
+              <option>Vine &middot; Muin (Charm, elegance and equality)</option>
+              <option>Ivy &middot; Gort (Bravery, determination and survival)</option>
+              <option>Reed &middot; Ngetal (Compassion, truth and inquisitiveness)</option>
+              <option>Elder &middot; Ruis (Adventurousness and thoughtfulness)</option>
           </select>
+        </div>
+
+        <div class="o-grid o-two o-astro">
+          <div class="o-f"><label for="dct-o-bday">Birth day</label><select id="dct-o-bday" name="born_day"><option value="">Day</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div>
+          <div class="o-f"><label for="dct-o-bmonth">Birth month</label><select id="dct-o-bmonth" name="born_month"><option value="">Month</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
         </div>
 
         <div class="o-cert" role="group" aria-labelledby="dct-o-cert-lbl">
@@ -135,18 +142,24 @@
   var LABEL = { 'sponsor': 'Sponsorship certificate', 'gift': 'Gift certificate', 'astro': 'Celtic astrology certificate' };   // astrology certificates are a separate kind: marked as such in the email and the order list
 
   $('cname').required = true;
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function bornText() { var dd = +$('bday').value, mm = +$('bmonth').value; return dd && mm ? dd + ' ' + MONTHS[mm - 1] : ''; }
+  function syncKind() { root.classList.toggle('is-astro', what.value === 'astro'); }
+  what.addEventListener('change', syncKind); syncKind();
 
   // A Celtic tree picked elsewhere (the tree list on this page, or ?tree=oak in the address): choose it here and make it a sponsorship.
-  function pickTree(name, scroll) {
+  function pickTree(name, scroll, born) {
+    var b = String(born || '').match(/^(\d{1,2})-(\d{1,2})$/);
+    if (b && +b[1] >= 1 && +b[1] <= 31 && +b[2] >= 1 && +b[2] <= 12) { $('bday').value = String(+b[1]); $('bmonth').value = String(+b[2]); }
     name = String(name || '').toLowerCase(); if (!/^[a-z]{2,10}$/.test(name)) return;
     var t = $('tree'), i;
     for (i = 0; i < t.options.length; i++) if (t.options[i].text.toLowerCase().indexOf(name + ' ') === 0) { t.selectedIndex = i; break; }
     if (i === t.options.length) return;
-    what.value = 'astro';   // a tree picked from the Celtic astrology page = an astrology certificate
+    what.value = 'astro'; syncKind();   // a tree picked from the Celtic astrology page = an astrology certificate
     if (scroll) root.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-  document.addEventListener('dct-pick-tree', function (e) { pickTree(e.detail, true); });
-  try { var q = new URLSearchParams(window.location.search).get('tree'); if (q) pickTree(q, false); } catch (_) {}
+  document.addEventListener('dct-pick-tree', function (e) { var x = e.detail || {}; if (typeof x === 'string') pickTree(x, true); else pickTree(x.tree, true, x.born); });
+  try { var qs = new URLSearchParams(window.location.search), q = qs.get('tree'); if (q) pickTree(q, false, qs.get('born')); } catch (_) {}
 
   function say(t) { status.textContent = t || ''; }
   function timed(url, opts, ms) {
@@ -165,10 +178,11 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault(); say('');
     if (form.website.value) { done('Go raibh maith agat!', 'Thank you.', '', false); return; }   // hidden field filled in: a bot
-    var d = { what: what.value, name: $('name').value.trim(), email: $('email').value.trim(), tree: $('tree').value || 'Not sure: choose for me',
+    var d = { what: what.value, name: $('name').value.trim(), email: $('email').value.trim(), tree: ($('tree').value || 'Not sure: choose for me') + (what.value === 'astro' && bornText() ? ' \u00b7 born ' + bornText() : ''),
       cert_name: $('cname').value.trim(), cert_from: $('cfrom').value.trim(), cert_message: $('cmsg').value.trim() };
     if (!d.name) { say('Please type your name.'); $('name').focus(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) { say('Please check your email address.'); $('email').focus(); return; }
+    if (d.what === 'astro' && !bornText()) { say('Please choose the birth day and month for the astrology certificate.'); $('bday').focus(); return; }
     if (d.what === 'astro' && !$('tree').value) { say('Please choose the Celtic tree for the astrology certificate.'); $('tree').focus(); return; }
     if (!d.cert_name) { say('Please type the name for the certificate.'); $('cname').focus(); return; }
     if (!$('consent').checked) { say('Please tick the box to agree we can contact you about your sponsorship.'); $('consent').focus(); return; }

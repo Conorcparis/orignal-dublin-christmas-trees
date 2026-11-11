@@ -11,6 +11,7 @@
   var STATUSES = ['new', 'confirmed', 'paid', 'done', 'cancelled'];
   var $ = function (s) { return document.querySelector(s); };
   var key = '', timer = null;
+  var all = [], view = 'orders', sortKey = 'name', sortDir = 1;
 
   function el(tag, props, children) {
     var n = document.createElement(tag);
@@ -44,7 +45,8 @@
 
   // address of the certificate maker, filled in for this order
   function certLink(r, kind) {
-    var p = new URLSearchParams({ kind: kind, to: r.cert_name || r.name, from: r.cert_from || '', msg: r.cert_message || '', tree: (r.tree || '').split(/[\s·]/)[0].toLowerCase(), no: r.ref });
+    var am = /Amount: \u20AC([0-9.]+)/.exec(r.notes || '');
+    var p = new URLSearchParams({ kind: kind, amount: am ? am[1] : '', to: r.cert_name || r.name, from: r.cert_from || '', msg: r.cert_message || '', tree: (r.tree || '').split(/[\s·]/)[0].toLowerCase(), no: r.ref, born: ((r.tree || '').match(/born (\d{1,2} [A-Za-z]+)/) || [])[1] || '' });
     return 'certificates.html#' + p.toString();
   }
   function fmt(iso) { var d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString('en-IE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
@@ -70,9 +72,10 @@
     });
     var buttons = [];
     if (r.cert_name) {
-      buttons.push(el('a', { class: 'px-3 py-2 rounded bg-tertiary-container text-on-tertiary font-button-text text-button-text hover:bg-tertiary', href: certLink(r, 'cert'), text: 'Certificate' }));
+      buttons.push(el('a', { class: 'px-3 py-2 rounded bg-tertiary-container text-on-tertiary font-button-text text-button-text hover:bg-tertiary', href: certLink(r, /astrology/i.test(r.interests || '') ? 'astro' : 'cert'), text: /astrology/i.test(r.interests || '') ? 'Astrology certificate' : 'Certificate' }));
       buttons.push(el('a', { class: 'px-3 py-2 rounded bg-primary-container text-on-primary font-button-text text-button-text hover:bg-primary', href: certLink(r, 'gift'), text: 'Gift card' }));
     }
+    buttons.push(emailButton(r.email, r.name, r.ref, r.cert_name));
     var mail = el('a', { class: 'underline text-primary', href: 'mailto:' + encodeURIComponent(r.email).replace('%40', '@'), text: r.email });
     return el('li', { class: 'bg-surface-container-lowest rounded-lg shadow-sm p-5 flex flex-col gap-2' }, [
       el('div', { class: 'flex flex-wrap items-center justify-between gap-2' }, [
@@ -95,11 +98,73 @@
         $('#msg').textContent = '';
         var list = $('#list'); list.textContent = '';
         j.reservations.forEach(function (x) { list.appendChild(card(x)); });
+        all = j.reservations; renderCustomers();
         var count = function (s) { return j.reservations.filter(function (x) { return x.status === s; }).length; };
         $('#summary').textContent = j.reservations.length ? j.reservations.length + ' shown: ' + count('new') + ' new, ' + count('confirmed') + ' confirmed, ' + count('paid') + ' paid, ' + count('done') + ' done, ' + count('cancelled') + ' cancelled.' : 'No reservations yet.';
       });
     }, function () { $('#msg').textContent = 'Could not reach the orders service.'; });
   }
+
+
+  // ---- Customers: one row per email address, sortable; Email opens a ready-written message in the owner's own Gmail or mail app ----
+  function mailText(name, ref, certName) {
+    var first = (name || '').split(' ')[0] || 'there';
+    return {
+      subject: 'Your Original Dublin Christmas Trees certificate' + (ref ? ' (' + ref + ')' : ''),
+      body: 'Hi ' + first + ',\n\nThank you for your order. Your certificate' + (certName ? ' for ' + certName : '') + ' is attached.' + (ref ? '\nIts certificate code is ' + ref + '.' : '') + '\n\nHappy Christmas,\nThe Original Dublin Christmas Trees'
+    };
+  }
+  function emailButton(to, name, ref, certName) {
+    var t = mailText(name, ref, certName);
+    var q = 'view=cm&fs=1&to=' + encodeURIComponent(to) + '&su=' + encodeURIComponent(t.subject) + '&body=' + encodeURIComponent(t.body);
+    return el('a', { class: 'px-3 py-2 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high', href: 'https://mail.google.com/mail/?' + q, target: '_blank', rel: 'noopener noreferrer', text: 'Email' });
+  }
+  function customersOf(rows) {
+    var map = {};
+    rows.forEach(function (r) {
+      var k = (r.email || '').toLowerCase(), c = map[k];
+      if (!c) c = map[k] = { name: r.name, email: r.email, orders: 0, latest: '', tree: '', status: '', ref: '', certName: '', area: '' };
+      c.orders++;
+      if (!c.latest || r.created_at > c.latest) { c.latest = r.created_at; c.name = r.name; c.tree = r.tree || ''; c.status = r.status; c.ref = r.ref; c.certName = r.cert_name || ''; c.area = r.area || ''; }
+    });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+  function renderCustomers() {
+    var box = $('#customers'); if (!box) return;
+    box.textContent = '';
+    var list = customersOf(all).sort(function (a, b) {
+      var x = a[sortKey], y = b[sortKey];
+      if (typeof x === 'number') return (x - y) * sortDir;
+      return String(x || '').toLowerCase().localeCompare(String(y || '').toLowerCase()) * sortDir;
+    });
+    var cols = [['name', 'Name'], ['email', 'Email'], ['orders', 'Orders'], ['latest', 'Latest order'], ['tree', 'Tree'], ['status', 'Status'], ['area', 'Area']];
+    var head = el('tr', {}, cols.map(function (c) {
+      var b = el('button', { type: 'button', class: 'font-label-mono-xs text-label-mono-xs uppercase font-bold text-primary', text: c[1] + (sortKey === c[0] ? (sortDir > 0 ? ' \u25B2' : ' \u25BC') : '') });
+      b.addEventListener('click', function () { if (sortKey === c[0]) sortDir = -sortDir; else { sortKey = c[0]; sortDir = c[0] === 'latest' || c[0] === 'orders' ? -1 : 1; } renderCustomers(); });
+      return el('th', { class: 'text-left px-3 py-2' }, [b]);
+    }).concat([el('th', { class: 'px-3 py-2' })]));
+    var body = list.map(function (c) {
+      var open = el('button', { type: 'button', class: 'px-3 py-2 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high', text: 'Orders' });
+      open.addEventListener('click', function () { $('#f-q').value = c.email; setView('orders'); load(); });
+      return el('tr', { class: 'border-t border-outline-variant/30' }, [
+        el('td', { class: 'px-3 py-2 font-bold', text: c.name }), el('td', { class: 'px-3 py-2', text: c.email }), el('td', { class: 'px-3 py-2', text: String(c.orders) }),
+        el('td', { class: 'px-3 py-2', text: fmt(c.latest) }), el('td', { class: 'px-3 py-2', text: c.tree }), el('td', { class: 'px-3 py-2', text: c.status }), el('td', { class: 'px-3 py-2', text: c.area }),
+        el('td', { class: 'px-3 py-2' }, [el('div', { class: 'flex gap-2' }, [emailButton(c.email, c.name, c.ref, c.certName), open])])]);
+    });
+    box.appendChild(el('table', { class: 'w-full bg-surface-container-lowest rounded-lg shadow-sm font-body-sm text-body-sm' }, [el('thead', {}, [head]), el('tbody', {}, body)]));
+    if (!list.length) box.appendChild(el('p', { class: 'font-body-sm text-body-sm text-on-surface-variant mt-2', text: 'No customers yet.' }));
+  }
+  function setView(v) {
+    view = v;
+    $('#list').classList.toggle('hidden', v !== 'orders'); $('#customers').classList.toggle('hidden', v !== 'customers');
+    [['orders', '#v-orders'], ['customers', '#v-customers']].forEach(function (p) {
+      var b = $(p[1]), on = v === p[0];
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.className = 'h-11 px-5 rounded font-button-text text-button-text ' + (on ? 'bg-primary text-on-primary' : 'bg-surface-container text-primary');
+    });
+  }
+  $('#v-orders').addEventListener('click', function () { setView('orders'); });
+  $('#v-customers').addEventListener('click', function () { setView('customers'); });
 
   $('#login-form').addEventListener('submit', function (e) {
     e.preventDefault(); key = $('#key').value.trim(); if (!key) return;
@@ -111,6 +176,20 @@
       store(key); $('#login-msg').textContent = ''; signedIn(); load(); timer = setInterval(function () { if (!document.hidden) load(); }, 60000);
     }, function () { $('#login-msg').textContent = 'Could not reach the orders service.'; });
   });
+  // Paste an order email: the service saves it as an order (its reference is the certificate code) and the certificate opens filled in.
+  $('#paste-go').addEventListener('click', function () {
+    var text = $('#paste').value.trim(), msg = $('#paste-msg'); if (!text) { msg.textContent = 'Paste the order email first.'; return; }
+    msg.textContent = 'Reading\u2026';
+    api('/api/admin/import', { method: 'POST', body: { text: text } }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (r.status === 401) { msg.textContent = fail(r); return; }
+        if (!r.ok) { msg.textContent = j.error === 'invalid' ? 'Could not find: ' + Object.keys(j.fields || {}).join(', ') + '. Paste the whole email, with its headings.' : fail(r); return; }
+        msg.textContent = ''; $('#paste').value = '';
+        window.location.href = certLink(j.reservation, j.kind);
+      });
+    }, function () { msg.textContent = 'Could not reach the orders service.'; });
+  });
+  $('#showkey').addEventListener('change', function () { $('#key').type = this.checked ? 'text' : 'password'; });
   $('#logout').addEventListener('click', function () { signOut('Signed out.'); });
   $('#refresh').addEventListener('click', load);
   $('#f-status').addEventListener('change', load);
