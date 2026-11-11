@@ -94,14 +94,16 @@ async function readLimited(request, max) {
   return new TextDecoder().decode(all);
 }
 
-// The headings of the website order form (the Webador form), exactly as they appear in the email it sends.
-const ORDER_LABELS = ['What would you like?', 'Name on the certificate', 'Tree', 'From', 'Personal message', 'Your name', 'Your email', 'Your phone', 'Dublin area or Eircode', 'Needed by', 'Gift amount', 'How should it reach them?', 'Consent', 'email'];
+// The headings of an order email: Webador's own form ('What would you like?' ...) and the website order boxes' FormSubmit email (name, email, certificate_type ...).
+const ORDER_LABELS = ['What would you like?', 'Name on the certificate', 'Tree', 'From', 'Personal message', 'Your name', 'Your email', 'Your phone', 'Dublin area or Eircode', 'Needed by', 'Gift amount', 'How should it reach them?', 'Consent', 'email',
+  'name', 'reference', 'what', 'certificate_type', 'celtic_tree', 'born', 'certificate_name', 'certificate_from', 'certificate_message', 'delivery_area', 'interests'];
 /** Reads a pasted order email: each heading on its own line with the value on the next line (or after a tab or a colon on the same line). */
 function parseOrderEmail(text) {
   const lines = String(text || '').replace(/\r/g, '').split('\n').map((l) => l.trim());
   const byLower = new Map(ORDER_LABELS.map((l) => [l.toLowerCase(), l]));
   const found = {};
   for (let i = 0; i < lines.length; i++) {
+    if (/^name\s+value$/i.test(lines[i])) continue;   // the header row of FormSubmit's table email, not a field
     let label = byLower.get(lines[i].toLowerCase()), value = '';
     if (label) {
       let j = i + 1; while (j < lines.length && lines[j] === '') j++;
@@ -116,11 +118,15 @@ function parseOrderEmail(text) {
 }
 /** Turns the pasted fields into a reservation, or says what is missing. */
 function orderFromEmail(found) {
-  const gift = (found['What would you like?'] || '').toLowerCase().includes('gift');
-  const o = { name: clean(found['Your name'] || found['From'], LIMITS.name), email: clean(found['Your email'] || found['email'], LIMITS.email).toLowerCase(),
-    tree: clean(found['Tree'], LIMITS.tree), area: clean(found['Dublin area or Eircode'], LIMITS.area),
-    cert_name: clean(found['Name on the certificate'], LIMITS.cert_name), cert_from: clean(found['From'], LIMITS.cert_from), cert_message: clean(found['Personal message'], LIMITS.cert_message),
-    interests: gift ? 'Gift certificate' : 'Tree sponsorship' };
+  const what = String(found['What would you like?'] || found['certificate_type'] || found['what'] || found['interests'] || '').toLowerCase();
+  const gift = what.includes('gift'), astro = what.includes('astrology');
+  const born = clean(found['born'], 30), tree = clean(found['Tree'] || found['celtic_tree'], LIMITS.tree);
+  const o = { name: clean(found['Your name'] || found['name'] || found['From'], LIMITS.name), email: clean(found['Your email'] || found['email'], LIMITS.email).toLowerCase(),
+    tree: clean(born && !/born /i.test(tree) ? tree + ' \u00b7 born ' + born : tree, LIMITS.tree), area: clean(found['Dublin area or Eircode'] || found['delivery_area'], LIMITS.area),
+    cert_name: clean(found['Name on the certificate'] || found['certificate_name'], LIMITS.cert_name), cert_from: clean(found['From'] || found['certificate_from'], LIMITS.cert_from),
+    cert_message: clean(found['Personal message'] || found['certificate_message'], LIMITS.cert_message),
+    interests: astro ? 'Celtic astrology certificate' : gift ? 'Gift certificate' : 'Tree sponsorship',
+    ref: (String(found['reference'] || '').toUpperCase().match(/R-[A-Z0-9]{6}/) || [''])[0] };
   const notes = [];
   if (clean(found['Your phone'], 40)) notes.push('Phone: ' + clean(found['Your phone'], 40));
   const amt = clean(found['Gift amount'], 20).replace(',', '.').replace(/[^0-9.]/g, '');
@@ -132,7 +138,8 @@ function orderFromEmail(found) {
   if (!o.name) errors.name = 'required';
   if (!EMAIL.test(o.email)) errors.email = 'invalid';
   if (!o.cert_name) errors.cert_name = 'required';
-  return { o, errors, kind: gift ? 'gift' : 'cert' };
+  // Webador's own form sells gift cards (with an amount): those open the gift card. The order boxes' gift certificate opens the certificate.
+  return { o, errors, kind: astro ? 'astro' : gift && found['What would you like?'] !== undefined ? 'gift' : 'cert' };
 }
 
 function validate(b) {
@@ -213,6 +220,11 @@ async function handleAdmin(request, env, url, cors) {
     let b; try { b = JSON.parse(raw); } catch { return json({ ok: false, error: 'bad_json' }, 400, nostore); }
     const { o, errors, kind } = orderFromEmail(parseOrderEmail(b && b.text));
     if (Object.keys(errors).length) return json({ ok: false, error: 'invalid', fields: errors }, 400, nostore);
+    // An email that already carries a reference is an order that is already in the list: open that one, never a copy.
+    if (o.ref) {
+      const have = await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes FROM reservations WHERE ref = ?').bind(o.ref).first();
+      if (have) return json({ ok: false, error: 'already_in_list', reservation: have, kind: /astrology/i.test(have.interests) ? 'astro' : 'cert' }, 409, nostore);
+    }
     const now = new Date().toISOString();
     for (let attempt = 0; attempt < 5; attempt++) {
       const ref = newRef();

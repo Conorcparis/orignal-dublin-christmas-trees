@@ -283,8 +283,10 @@
     api('/api/admin/import', { method: 'POST', body: { text: text } }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) {
         if (r.status === 401) { msg.textContent = fail(r); return; }
-        if (!r.ok) { msg.textContent = j.error === 'invalid' ? 'Could not find: ' + Object.keys(j.fields || {}).join(', ') + '. Paste the whole email, with its headings.' : fail(r); return; }
-        msg.textContent = ''; $('#paste').value = '';
+        if (r.status === 409 && j.reservation) { msg.textContent = 'This order is already in the list as ' + j.reservation.ref + '.'; $('#f-q').value = j.reservation.ref; load(); return; }
+        var NAMES = { name: 'the customer name', email: 'the customer email', cert_name: 'the name on the certificate' };
+        if (!r.ok) { msg.textContent = j.error === 'invalid' ? 'Could not find ' + Object.keys(j.fields || {}).map(function (f) { return NAMES[f] || f; }).join(', ') + '. Paste the whole order email, with its headings.' : fail(r); return; }
+        msg.textContent = 'Added as ' + j.reservation.ref + '.'; $('#paste').value = ''; load();
         window.location.href = certLink(j.reservation, j.kind);
       });
     }, function () { msg.textContent = 'Could not reach the orders service.'; });

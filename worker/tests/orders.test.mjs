@@ -260,3 +260,19 @@ test('a sponsorship with a Christmas tree is settled free; the certificate is st
   assert.equal((await get()).cert_sent_at, '');
   assert.ok((await (await admin(env, '/api/admin/export.csv')).text()).split('\r\n')[0].endsWith(',cert_sent_at'));
 });
+
+test('import reads the order boxes\' FormSubmit email too (label line, then value line), and never copies an order already in the list', async () => {
+  const env = mkEnv();
+  const mail = 'Name\tValue\nreference\n(none)\ncertificate_type\nCeltic astrology certificate\nname\nTom Barry\nemail\ntom@example.ie\nborn\n15 June\n' +
+    'celtic_tree\nOak \u00b7 Duir (Loyalty, generosity and stability)\ncertificate_name\nSean\ncertificate_from\nTom\ncertificate_message\nHappy birthday\n';
+  const r = await admin(env, '/api/admin/import', { method: 'POST', body: { text: mail } });
+  assert.equal(r.status, 201); const j = await r.json();
+  assert.equal(j.kind, 'astro');
+  assert.equal(j.reservation.interests, 'Celtic astrology certificate');
+  assert.equal(j.reservation.tree, 'Oak \u00b7 Duir (Loyalty, generosity and stability) \u00b7 born 15 June');
+  assert.equal(j.reservation.cert_name, 'Sean'); assert.equal(j.reservation.cert_from, 'Tom'); assert.equal(j.reservation.cert_message, 'Happy birthday');
+  const gift = await (await admin(env, '/api/admin/import', { method: 'POST', body: { text: 'what\tGift certificate\nname\tAnn\nemail\tann@example.ie\ncertificate_name\tGranny\n' } })).json();
+  assert.equal(gift.reservation.interests, 'Gift certificate');
+  const again = await admin(env, '/api/admin/import', { method: 'POST', body: { text: mail.replace('(none)', j.reservation.ref) } });
+  assert.equal(again.status, 409); assert.equal((await again.json()).reservation.ref, j.reservation.ref);
+});
