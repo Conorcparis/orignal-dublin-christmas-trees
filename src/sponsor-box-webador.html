@@ -1,11 +1,3 @@
-<!-- The Original Dublin Christmas Trees: SPONSOR BOX for the Webador Sponsor page (sponsor a native tree, or a gift certificate).
-     Paste the whole file into a Webador "Embed code" / HTML block. Nothing is loaded from GitHub and nothing links to it.
-     Christmas trees are sold in the Webador shop, so they are not in this box. The Celtic astrology box (celtic-astrology-webador.html) links here with ?tree=<name>.
-     On "Send": 1) saved in the orders database (Cloudflare, Europe) -> reference R-XXXXXX, shown on the admin page;
-                2) emailed to the shop mailbox through FormSubmit (private form code, not the address) with the reference,
-                   and FormSubmit sends the customer an automatic confirmation;
-                3) if the database cannot be reached, the email still goes; if both fail, the customer gets the text to email themselves.
-     The database accepts this box only from the website addresses in worker/src/index.js ALLOWED_ORIGINS. -->
 <div id="dct-sponsor">
 <style>
 #dct-sponsor{--o-ink:#002244;--o-blue:#004B87;--o-green:#1C3A2C;--o-gold:#B08D3C;--o-text:#2B3440;--o-muted:#5B6673;--o-line:rgba(0,34,68,.16);--o-bg:#FBF8F1;--o-field:#F3F6F9;
@@ -124,6 +116,14 @@
 </div>
 
 <script>
+// The Original Dublin Christmas Trees: SPONSOR BOX for the Webador Sponsor page (sponsor a native tree, or a gift certificate).
+// Paste the whole file into a Webador "Embed code" / HTML block. Nothing is loaded from GitHub and nothing links to it.
+// Christmas trees are sold in the Webador shop, so they are not in this box. The Celtic astrology box (celtic-astrology-webador.html) links here with ?tree=<name>.
+// On "Send": 1) saved in the orders database (Cloudflare, Europe) -> reference R-XXXXXX, shown on the admin page;
+// 2) emailed to the shop mailbox through FormSubmit (private form code, not the address) with the reference,
+// and FormSubmit sends the customer an automatic confirmation;
+// 3) if the database cannot be reached, the email still goes; if both fail, the customer gets the text to email themselves.
+// The database accepts this box only from the website addresses in worker/src/index.js ALLOWED_ORIGINS.
 (function () {
   var ORDERS = 'https://dublin-trees-orders.conor-0a0.workers.dev/api/reservations';
   var MAILER = 'https://formsubmit.co/ajax/03c4ec96febca3411138c6b7ab8ba85a';   // the shop mailbox's private FormSubmit code
