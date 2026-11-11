@@ -32,7 +32,19 @@
 .cta-astro li.is-now + li .a-row{border-top-color:transparent}
 .cta-astro .a-note{font-size:14px;color:var(--a-muted);margin:10px 16px 12px;padding-top:12px;border-top:1px dashed var(--a-line)}
 @media (max-width:480px){.cta-astro{padding:56px 16px}.cta-astro .a-row{grid-template-columns:28px 1fr;gap:4px 12px;padding:12px}.cta-astro .a-dates{grid-column:2;text-align:left}.cta-astro .a-ogham{grid-row:span 2;font-size:20px}}
-@media (prefers-reduced-motion:reduce){</style>
+@media (prefers-reduced-motion:reduce){.cta-astro *{transition:none!important;scroll-behavior:auto!important}}
+.cta-astro .a-find{margin:4px 16px 14px;padding:14px;border-radius:12px;background:#F3F6F9;display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.cta-astro .a-find label{font:600 11px/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--a-ink);display:flex;flex-direction:column;gap:6px}
+.cta-astro .a-find select{min-height:44px;padding:8px 10px;border:1px solid var(--a-line);border-radius:8px;background:#fff;font:inherit;font-size:16px;letter-spacing:0;text-transform:none;color:var(--a-text)}
+.cta-astro .a-result{grid-column:1/-1;margin:0;font-size:16px;color:var(--a-ink)}
+.cta-astro .a-result:empty{display:none}
+.cta-astro .a-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border-radius:999px;font-weight:600;font-size:15px;text-decoration:none}
+.cta-astro .a-btn-main{background:var(--a-ink);color:#fff;border:1px solid var(--a-ink)}
+.cta-astro .a-btn-main:hover{background:var(--a-blue);border-color:var(--a-blue)}
+.cta-astro .a-btn:focus-visible{outline:3px solid var(--a-gold);outline-offset:3px}
+.cta-astro .a-result .a-btn{margin-top:10px}
+.cta-astro .a-row.is-mine{outline:2px solid var(--a-gold);outline-offset:-2px}
+</style>
 <div class="a-wrap">
   <div class="a-intro">
     <p class="a-eyebrow">Celtic Tree Astrology · Ogham</p>
@@ -44,20 +56,21 @@
   <div class="a-table">
     <h3>Find your Celtic birth tree</h3>
     <p class="a-sub">The 13 trees and their commonly used birth-date associations.</p>
+    <div class="a-find" id="a-find"><label>Birth day<select id="a-day"><option value="">Day</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></label><label>Birth month<select id="a-month"><option value="">Month</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></label><p class="a-result" id="a-result" aria-live="polite"></p></div>
     <ol>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=birch#dct-order" data-tree="birch" data-m="1224"><span class="a-ogham" aria-hidden="true">ᚁ</span><span><span class="a-name">Birch</span><span class="a-irish">Beith</span><span class="a-now">Now</span></span><span class="a-dates">24 Dec – 20 Jan</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=rowan#dct-order" data-tree="rowan" data-m="121"><span class="a-ogham" aria-hidden="true">ᚂ</span><span><span class="a-name">Rowan</span><span class="a-irish">Luis</span><span class="a-now">Now</span></span><span class="a-dates">21 Jan – 17 Feb</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=ash#dct-order" data-tree="ash" data-m="218"><span class="a-ogham" aria-hidden="true">ᚅ</span><span><span class="a-name">Ash</span><span class="a-irish">Nion</span><span class="a-now">Now</span></span><span class="a-dates">18 Feb – 17 Mar</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=alder#dct-order" data-tree="alder" data-m="318"><span class="a-ogham" aria-hidden="true">ᚃ</span><span><span class="a-name">Alder</span><span class="a-irish">Fearn</span><span class="a-now">Now</span></span><span class="a-dates">18 Mar – 14 Apr</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=willow#dct-order" data-tree="willow" data-m="415"><span class="a-ogham" aria-hidden="true">ᚄ</span><span><span class="a-name">Willow</span><span class="a-irish">Saille</span><span class="a-now">Now</span></span><span class="a-dates">15 Apr – 12 May</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=hawthorn#dct-order" data-tree="hawthorn" data-m="513"><span class="a-ogham" aria-hidden="true">ᚆ</span><span><span class="a-name">Hawthorn</span><span class="a-irish">Huath</span><span class="a-now">Now</span></span><span class="a-dates">13 May – 9 Jun</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=oak#dct-order" data-tree="oak" data-m="610"><span class="a-ogham" aria-hidden="true">ᚇ</span><span><span class="a-name">Oak</span><span class="a-irish">Duir</span><span class="a-now">Now</span></span><span class="a-dates">10 Jun – 7 Jul</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=holly#dct-order" data-tree="holly" data-m="708"><span class="a-ogham" aria-hidden="true">ᚈ</span><span><span class="a-name">Holly</span><span class="a-irish">Tinne</span><span class="a-now">Now</span></span><span class="a-dates">8 Jul – 4 Aug</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=hazel#dct-order" data-tree="hazel" data-m="805"><span class="a-ogham" aria-hidden="true">ᚉ</span><span><span class="a-name">Hazel</span><span class="a-irish">Coll</span><span class="a-now">Now</span></span><span class="a-dates">5 Aug – 1 Sep</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=vine#dct-order" data-tree="vine" data-m="902"><span class="a-ogham" aria-hidden="true">ᚋ</span><span><span class="a-name">Vine</span><span class="a-irish">Muin</span><span class="a-now">Now</span></span><span class="a-dates">2 Sep – 29 Sep</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=ivy#dct-order" data-tree="ivy" data-m="930"><span class="a-ogham" aria-hidden="true">ᚌ</span><span><span class="a-name">Ivy</span><span class="a-irish">Gort</span><span class="a-now">Now</span></span><span class="a-dates">30 Sep – 27 Oct</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=reed#dct-order" data-tree="reed" data-m="1028"><span class="a-ogham" aria-hidden="true">ᚍ</span><span><span class="a-name">Reed</span><span class="a-irish">Ngetal</span><span class="a-now">Now</span></span><span class="a-dates">28 Oct – 24 Nov</span></a></li>
-      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=elder#dct-order" data-tree="elder" data-m="1125"><span class="a-ogham" aria-hidden="true">ᚏ</span><span><span class="a-name">Elder</span><span class="a-irish">Ruis</span><span class="a-now">Now</span></span><span class="a-dates">25 Nov – 22 Dec</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=birch#dct-sponsor" data-tree="birch" data-m="1224"><span class="a-ogham" aria-hidden="true">ᚁ</span><span><span class="a-name">Birch</span><span class="a-irish">Beith</span><span class="a-now">Now</span></span><span class="a-dates">24 Dec – 20 Jan</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=rowan#dct-sponsor" data-tree="rowan" data-m="121"><span class="a-ogham" aria-hidden="true">ᚂ</span><span><span class="a-name">Rowan</span><span class="a-irish">Luis</span><span class="a-now">Now</span></span><span class="a-dates">21 Jan – 17 Feb</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=ash#dct-sponsor" data-tree="ash" data-m="218"><span class="a-ogham" aria-hidden="true">ᚅ</span><span><span class="a-name">Ash</span><span class="a-irish">Nion</span><span class="a-now">Now</span></span><span class="a-dates">18 Feb – 17 Mar</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=alder#dct-sponsor" data-tree="alder" data-m="318"><span class="a-ogham" aria-hidden="true">ᚃ</span><span><span class="a-name">Alder</span><span class="a-irish">Fearn</span><span class="a-now">Now</span></span><span class="a-dates">18 Mar – 14 Apr</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=willow#dct-sponsor" data-tree="willow" data-m="415"><span class="a-ogham" aria-hidden="true">ᚄ</span><span><span class="a-name">Willow</span><span class="a-irish">Saille</span><span class="a-now">Now</span></span><span class="a-dates">15 Apr – 12 May</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=hawthorn#dct-sponsor" data-tree="hawthorn" data-m="513"><span class="a-ogham" aria-hidden="true">ᚆ</span><span><span class="a-name">Hawthorn</span><span class="a-irish">Huath</span><span class="a-now">Now</span></span><span class="a-dates">13 May – 9 Jun</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=oak#dct-sponsor" data-tree="oak" data-m="610"><span class="a-ogham" aria-hidden="true">ᚇ</span><span><span class="a-name">Oak</span><span class="a-irish">Duir</span><span class="a-now">Now</span></span><span class="a-dates">10 Jun – 7 Jul</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=holly#dct-sponsor" data-tree="holly" data-m="708"><span class="a-ogham" aria-hidden="true">ᚈ</span><span><span class="a-name">Holly</span><span class="a-irish">Tinne</span><span class="a-now">Now</span></span><span class="a-dates">8 Jul – 4 Aug</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=hazel#dct-sponsor" data-tree="hazel" data-m="805"><span class="a-ogham" aria-hidden="true">ᚉ</span><span><span class="a-name">Hazel</span><span class="a-irish">Coll</span><span class="a-now">Now</span></span><span class="a-dates">5 Aug – 1 Sep</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=vine#dct-sponsor" data-tree="vine" data-m="902"><span class="a-ogham" aria-hidden="true">ᚋ</span><span><span class="a-name">Vine</span><span class="a-irish">Muin</span><span class="a-now">Now</span></span><span class="a-dates">2 Sep – 29 Sep</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=ivy#dct-sponsor" data-tree="ivy" data-m="930"><span class="a-ogham" aria-hidden="true">ᚌ</span><span><span class="a-name">Ivy</span><span class="a-irish">Gort</span><span class="a-now">Now</span></span><span class="a-dates">30 Sep – 27 Oct</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=reed#dct-sponsor" data-tree="reed" data-m="1028"><span class="a-ogham" aria-hidden="true">ᚍ</span><span><span class="a-name">Reed</span><span class="a-irish">Ngetal</span><span class="a-now">Now</span></span><span class="a-dates">28 Oct – 24 Nov</span></a></li>
+      <li><a class="a-row" href="/sponsor-a-native-irish-tree-help-build-a-forest?tree=elder#dct-sponsor" data-tree="elder" data-m="1125"><span class="a-ogham" aria-hidden="true">ᚏ</span><span><span class="a-name">Elder</span><span class="a-irish">Ruis</span><span class="a-now">Now</span></span><span class="a-dates">25 Nov – 22 Dec</span></a></li>
     </ol>
     <p class="a-note">23 December is traditionally treated as an additional day outside the 13 periods in this calendar.</p>
   </div>
@@ -73,12 +86,38 @@
   rows[hit].parentNode.classList.add('is-now');
   rows[hit].setAttribute('aria-current', 'date');
 })();
-// A tree row picks that tree in the order box: on this page if the box is here, otherwise on the Sponsor page (the link).
+// A tree row picks that tree in the Sponsor box: on this page if the box is here, otherwise on the Sponsor page (the link).
 document.addEventListener('click', function (e) {
   var a = e.target.closest ? e.target.closest('#celtic-astrology .a-row[data-tree]') : null;
-  if (!a || !document.getElementById('dct-order')) return;
+  if (!a || !document.getElementById('dct-sponsor')) return;
   e.preventDefault();
   document.dispatchEvent(new CustomEvent('dct-pick-tree', { detail: a.getAttribute('data-tree') }));
 });
+// Birth-date finder: day + month -> the tree, highlighted in the list, with a button to sponsor it.
+(function () {
+  var day = document.getElementById('a-day'), month = document.getElementById('a-month'), out = document.getElementById('a-result');
+  var rows = document.querySelectorAll('#celtic-astrology .a-row');
+  var LAST = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  function show() {
+    for (var k = 0; k < rows.length; k++) rows[k].classList.remove('is-mine');
+    out.textContent = '';
+    var d = +day.value, m = +month.value; if (!d || !m) return;
+    if (d > LAST[m - 1]) { out.textContent = 'That month has only ' + LAST[m - 1] + ' days.'; return; }
+    var md = m * 100 + d;
+    if (md === 1223) { out.textContent = '23 December is the extra day outside the 13 trees: choose any tree you love.'; return; }
+    var hit = 0;
+    for (var i = 1; i < rows.length; i++) if (md >= +rows[i].getAttribute('data-m') && md < 1224) hit = i;
+    if (md >= 1224 || md < 121) hit = 0;
+    var row = rows[hit], name = row.querySelector('.a-name').textContent, irish = row.querySelector('.a-irish').textContent;
+    row.classList.add('is-mine');
+    var b = document.createElement('strong'); b.textContent = name + ' (' + irish + ')';
+    var a = document.createElement('a'); a.className = 'a-btn a-btn-main'; a.href = row.getAttribute('href'); a.setAttribute('data-tree', row.getAttribute('data-tree'));
+    a.textContent = 'Sponsor your ' + name + ' tree';
+    a.addEventListener('click', function (e) { if (!document.getElementById('dct-sponsor')) return; e.preventDefault(); document.dispatchEvent(new CustomEvent('dct-pick-tree', { detail: row.getAttribute('data-tree') })); });
+    out.appendChild(document.createTextNode('Your Celtic tree is ')); out.appendChild(b); out.appendChild(document.createTextNode('.'));
+    out.appendChild(document.createElement('br')); out.appendChild(a);
+  }
+  day.addEventListener('change', show); month.addEventListener('change', show);
+})();
 </script>
 </section>
