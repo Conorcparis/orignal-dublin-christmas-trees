@@ -52,7 +52,22 @@
   function fmt(iso) { var d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString('en-IE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
   function line(label, value) { return value ? el('p', { class: 'font-body-sm text-body-sm' }, [el('span', { class: 'font-label-mono-xs text-label-mono-xs text-on-surface-variant uppercase', text: label + ' ' }), el('span', { text: value })]) : null; }
 
+  // The offerings: each order is one kind, with its own label, colour and certificate.
+  var KINDS = {
+    astro: { label: 'Celtic astrology certificate', cls: 'kind-astro', button: 'Astrology certificate', cert: 'astro' },
+    gift: { label: 'Gift certificate', cls: 'kind-gift', button: 'Gift certificate', cert: 'cert' },
+    sponsor: { label: 'Tree sponsorship', cls: 'kind-sponsor', button: 'Sponsorship certificate', cert: 'cert' },
+    tree: { label: 'Christmas tree', cls: 'kind-tree', button: '', cert: '' }
+  };
+  function kindOf(r) {
+    var i = r.interests || '';
+    return /astrology/i.test(i) ? 'astro' : /gift/i.test(i) ? 'gift' : /sponsorship/i.test(i) ? 'sponsor' : 'tree';
+  }
+  // The birth date travels inside the tree text ("Oak · Duir (meaning) · born 15 June"): shown on its own line.
+  function splitTree(t) { var m = String(t || '').match(/^(.*?)\s*\u00b7\s*born (.+)$/); return m ? { tree: m[1], born: m[2] } : { tree: t || '', born: '' }; }
+
   function card(r) {
+    var k = KINDS[kindOf(r)], tb = splitTree(r.tree);
     var sel = el('select', { class: 'h-10 px-2 rounded bg-surface-container border border-outline-variant/40', 'aria-label': 'Status of ' + r.ref });
     STATUSES.forEach(function (s) { var o = el('option', { value: s, text: s[0].toUpperCase() + s.slice(1) }); if (s === r.status) o.selected = true; sel.appendChild(o); });
     var notes = el('textarea', { class: 'w-full px-3 py-2 rounded bg-surface-container text-on-surface font-body-sm', rows: '2', maxlength: '1000', placeholder: 'Private notes (paid by transfer, delivery slot…)', 'aria-label': 'Notes for ' + r.ref });
@@ -71,10 +86,7 @@
       api('/api/admin/reservations/' + encodeURIComponent(r.ref), { method: 'DELETE' }).then(function (res) { if (res.ok) load(); else $('#msg').textContent = fail(res); });
     });
     var buttons = [];
-    if (r.cert_name) {
-      buttons.push(el('a', { class: 'px-3 py-2 rounded bg-tertiary-container text-on-tertiary font-button-text text-button-text hover:bg-tertiary', href: certLink(r, /astrology/i.test(r.interests || '') ? 'astro' : 'cert'), text: /astrology/i.test(r.interests || '') ? 'Astrology certificate' : 'Certificate' }));
-      buttons.push(el('a', { class: 'px-3 py-2 rounded bg-primary-container text-on-primary font-button-text text-button-text hover:bg-primary', href: certLink(r, 'gift'), text: 'Gift card' }));
-    }
+    if (r.cert_name && k.cert) buttons.push(el('a', { class: 'px-3 py-2 rounded bg-tertiary-container text-on-tertiary font-button-text text-button-text hover:bg-tertiary', href: certLink(r, k.cert), text: k.button }));
     buttons.push(copyButton(r)); buttons.push(emailButton(r.email, r.name, r.ref, r.cert_name, r));
     // Payment received: 15 euro per certificate. One click marks it received (with today's date); Undo clears it.
     var due = +r.due_eur || 0, paid = +r.paid_eur || 0, payBox = null;
@@ -99,12 +111,13 @@
     var mail = el('a', { class: 'underline text-primary', href: 'mailto:' + encodeURIComponent(r.email).replace('%40', '@'), text: r.email });
     return el('li', { class: 'bg-surface-container-lowest rounded-lg shadow-sm p-5 flex flex-col gap-2' }, [
       el('div', { class: 'flex flex-wrap items-center justify-between gap-2' }, [
-        el('div', { class: 'flex items-center gap-3' }, [el('span', { class: 'font-label-mono-sm text-label-mono-sm font-bold text-primary', text: r.ref }), el('span', { class: 'font-label-mono-xs text-label-mono-xs text-on-surface-variant', text: fmt(r.created_at) })]),
+        el('div', { class: 'flex flex-wrap items-center gap-3' }, [el('span', { class: 'kind-badge ' + k.cls, text: k.label }), el('span', { class: 'font-label-mono-sm text-label-mono-sm font-bold text-primary', text: r.ref }), el('span', { class: 'font-label-mono-xs text-label-mono-xs text-on-surface-variant', text: fmt(r.created_at) })]),
         el('div', { class: 'flex items-center gap-2' }, [sel, state])]),
       el('h2', { class: 'font-headline-sm text-headline-sm text-primary', text: r.name }),
       el('p', { class: 'font-body-sm text-body-sm' }, [mail]),
-      line('Interested in', r.interests), line('Tree', r.tree), line('Area', r.area),
-      r.cert_name ? line('Certificate for', r.cert_name + (r.cert_from ? ', from ' + r.cert_from : '')) : null, line('Message', r.cert_message),
+      kindOf(r) === 'tree' || /,/.test(r.interests || '') ? line('Ordered', r.interests) : null,
+      line(kindOf(r) === 'astro' ? 'Birth tree' : 'Tree', tb.tree), line('Born', tb.born), line('Area', r.area),
+      line('Name on certificate', r.cert_name), line('From', r.cert_from), line('Message', r.cert_message),
       payBox, notes,
       el('div', { class: 'flex flex-wrap items-center gap-2' }, buttons.concat([saveNotes, del]))]);
   }
@@ -125,6 +138,8 @@
       return r.json().then(function (j) {
         $('#msg').textContent = '';
         var list = $('#list'); list.textContent = '';
+        var want = ($('#f-kind') || {}).value || '';
+        if (want) j.reservations = j.reservations.filter(function (x) { return kindOf(x) === want; });
         j.reservations.forEach(function (x) { list.appendChild(card(x)); });
         all = j.reservations; renderCustomers(); totals();
         var count = function (s) { return j.reservations.filter(function (x) { return x.status === s; }).length; };
@@ -240,6 +255,7 @@
   $('#logout').addEventListener('click', function () { signOut('Signed out.'); });
   $('#refresh').addEventListener('click', load);
   $('#f-status').addEventListener('change', load);
+  if ($('#f-kind')) $('#f-kind').addEventListener('change', load);
   $('#f-q').addEventListener('input', function () { clearTimeout($('#f-q')._t); $('#f-q')._t = setTimeout(load, 300); });
   $('#export').addEventListener('click', function () {
     api('/api/admin/export.csv').then(function (r) { if (!r.ok) { $('#msg').textContent = fail(r); return null; } return r.blob(); }).then(function (b) {
