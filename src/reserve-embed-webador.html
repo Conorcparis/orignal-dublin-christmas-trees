@@ -1,0 +1,16 @@
+<!-- The Original Dublin Christmas Trees: Registration & Tree Reservation box. Paste into a Webador "Embed code" / HTML block.
+     It shows docs/reserve.html (only the reservation box) from the main site, so every reservation is saved in the orders database
+     with its reference number and the owner gets the email alert, exactly as on the home page. The frame resizes itself to fit. -->
+<div id="dct-reserve-embed" style="width:100%;max-width:100%;margin:0;padding:0">
+  <iframe id="dct-reserve-frame" src="https://conorcparis.github.io/orignal-dublin-christmas-trees/reserve.html" title="Registration and Tree Reservation"
+    style="display:block;width:100%;height:1500px;border:0;margin:0;overflow:hidden" scrolling="no"></iframe>
+</div>
+<script>
+(function () {
+  var frame = document.getElementById('dct-reserve-frame');
+  window.addEventListener('message', function (e) {
+    if (e.origin !== 'https://conorcparis.github.io' || !e.data || typeof e.data.dctReserveHeight !== 'number') return;
+    frame.style.height = Math.max(400, Math.min(6000, e.data.dctReserveHeight)) + 'px';
+  });
+})();
+</script>

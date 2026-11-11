@@ -1,0 +1,193 @@
+<!-- The Original Dublin Christmas Trees: Registration & Tree Reservation box. Paste into a Webador "Embed code" / HTML block.
+     On send: the reservation is saved in the orders database (reference like R-7KQ2MX) and the owner gets an email alert (FormSubmit).
+     If the database refuses this page's address, the reservation goes straight to the owner's email instead, so nothing is lost.
+     Last fallback: the visitor's own email (Gmail, Outlook or their email app) with the request written out. -->
+<section id="dct-reserve" class="dct-res" aria-labelledby="dct-res-title">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;600&display=swap">
+<style>
+.dct-res{--r-ink:#002244;--r-blue:#004B87;--r-green:#1C3A2C;--r-gold:#B08D3C;--r-text:#2B3440;--r-muted:#5B6673;--r-line:rgba(0,34,68,.12);--r-bg:#FBF8F1;--r-card:#fff;--r-field:#F3F1EA;--r-err:#A3261B;
+  background:var(--r-bg);color:var(--r-text);padding:72px 16px;font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6}
+.dct-res *{box-sizing:border-box}
+.dct-res .r-card{max-width:760px;margin:0 auto;background:var(--r-card);border:1px solid var(--r-line);border-radius:16px;padding:40px 32px;box-shadow:0 10px 30px -18px rgba(0,34,68,.35)}
+.dct-res .r-eyebrow{font:600 12px/1.4 ui-monospace,'SFMono-Regular',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--r-green);margin:0 0 10px}
+.dct-res h2,.dct-res h3{font-family:'Playfair Display',Georgia,serif;font-weight:600;color:var(--r-ink);margin:0 0 8px;line-height:1.2}
+.dct-res h2{font-size:clamp(26px,3.6vw,34px)}
+.dct-res .r-sub{font-size:15px;color:var(--r-muted);margin:0 0 24px}
+.dct-res form{display:flex;flex-direction:column;gap:18px;margin:0}
+.dct-res .r-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:640px){.dct-res .r-grid{grid-template-columns:1fr 1fr}.dct-res .r-checks{grid-template-columns:repeat(3,1fr)}}
+.dct-res .r-field{display:flex;flex-direction:column;gap:6px}
+.dct-res label.r-lab,.dct-res .r-lab{font:700 11px/1.3 ui-monospace,'SFMono-Regular',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink)}
+.dct-res input[type=text],.dct-res input[type=email],.dct-res select,.dct-res textarea{width:100%;font:inherit;font-size:16px;color:var(--r-text);background:var(--r-field);border:1px solid transparent;border-radius:6px;padding:10px 14px;min-height:44px}
+.dct-res input:focus,.dct-res select:focus,.dct-res textarea:focus{outline:2px solid var(--r-blue);outline-offset:1px;background:#fff}
+.dct-res .r-checks{display:grid;grid-template-columns:1fr;gap:8px}
+.dct-res .r-check{display:flex;align-items:center;gap:10px;padding:12px;border-radius:6px;background:var(--r-field);cursor:pointer;font-size:15px}
+.dct-res .r-check:hover{background:#EAE6DA}
+.dct-res input[type=checkbox]{width:18px;height:18px;accent-color:var(--r-green);margin:0;flex:none}
+.dct-res .r-cert{display:flex;flex-direction:column;gap:14px;padding:16px;border-radius:8px;border-left:3px solid var(--r-gold);background:#FAF7EE}
+.dct-res .r-cert[hidden],.dct-res [hidden]{display:none!important}
+.dct-res .r-consent{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--r-muted)}
+.dct-res .r-consent input{margin-top:3px}
+.dct-res .r-consent a{color:var(--r-blue)}
+.dct-res .r-status{min-height:1.4em;margin:0;font-size:14px;color:var(--r-err)}
+.dct-res .r-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 16px/1 'Plus Jakarta Sans',system-ui,sans-serif;border:0;border-radius:6px;padding:15px 20px;cursor:pointer;text-decoration:none;transition:transform .15s,background .15s}
+.dct-res .r-primary{width:100%;background:var(--r-green);color:#fff}
+.dct-res .r-primary:hover{background:#142B21;transform:translateY(-1px)}
+.dct-res .r-primary[disabled]{opacity:.6;cursor:wait;transform:none}
+.dct-res .r-alt{background:var(--r-field);color:var(--r-ink);font-size:14px;padding:10px 16px}
+.dct-res .r-done{text-align:center;padding:16px 0}
+.dct-res .r-done:focus{outline:none}
+.dct-res .r-tree{width:64px;height:64px;border-radius:50%;background:#EEF4EF;color:var(--r-green);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px}
+.dct-res .r-done p{max-width:480px;margin:0 auto 14px;color:var(--r-muted)}
+.dct-res .r-summary{max-width:480px;margin:0 auto 12px;display:block;font:13px/1.5 ui-monospace,Menlo,monospace;min-height:auto}
+.dct-res .r-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.dct-res .r-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+@media (max-width:480px){.dct-res{padding:56px 16px}.dct-res .r-card{padding:28px 18px}}
+@media (prefers-reduced-motion:reduce){.dct-res .r-btn{transition:none}}
+</style>
+<div class="r-card">
+  <div class="r-form-box">
+    <p class="r-eyebrow">The Original Dublin Christmas Trees</p>
+    <h2 id="dct-res-title">Registration &amp; Tree Reservation</h2>
+    <p class="r-sub">Complete your details to secure your tree and native planting certification.</p>
+    <form class="r-form" novalidate>
+      <div class="r-hp" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+      <div class="r-grid">
+        <div class="r-field"><label class="r-lab" for="dct-name">Full name</label><input id="dct-name" name="name" type="text" autocomplete="name" maxlength="100" placeholder="e.g. Aoife Ní Cheallaigh" required></div>
+        <div class="r-field"><label class="r-lab" for="dct-email">Email address</label><input id="dct-email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="aoife@example.ie" required></div>
+      </div>
+      <div class="r-field" role="group" aria-labelledby="dct-interest-label">
+        <span class="r-lab" id="dct-interest-label">I'm interested in</span>
+        <div class="r-checks">
+          <label class="r-check"><input type="checkbox" name="interest" value="Christmas tree" checked> Christmas Tree</label>
+          <label class="r-check"><input type="checkbox" name="interest" value="Tree sponsorship"> Tree Sponsorship</label>
+          <label class="r-check"><input type="checkbox" name="interest" value="Gift certificate"> Gift Certificate</label>
+        </div>
+      </div>
+      <div class="r-cert" role="group" aria-labelledby="dct-cert-label" hidden>
+        <span class="r-lab" id="dct-cert-label">For the certificate or gift card</span>
+        <div class="r-grid">
+          <div class="r-field"><label class="r-lab" for="dct-cert-name">Name on the certificate</label><input id="dct-cert-name" name="cert_name" type="text" maxlength="60" autocomplete="off" placeholder="Who the tree is for"></div>
+          <div class="r-field"><label class="r-lab" for="dct-cert-from">From</label><input id="dct-cert-from" name="cert_from" type="text" maxlength="60" autocomplete="off" placeholder="Your name, as the giver"></div>
+        </div>
+        <div class="r-field"><label class="r-lab" for="dct-cert-message">Message (optional)</label><textarea id="dct-cert-message" name="cert_message" rows="2" maxlength="160" placeholder="A short message to print on it"></textarea></div>
+      </div>
+      <div class="r-grid">
+        <div class="r-field"><label class="r-lab" for="dct-tree">Circle of Life native tree</label>
+          <select id="dct-tree" name="tree">
+            <option value="hazel">Hazel · Coll (Wisdom &amp; Creativity)</option>
+            <option value="birch">Birch · Beith (New Beginnings)</option>
+            <option value="rowan">Rowan · Luis (Vision &amp; Insight)</option>
+            <option value="ash">Ash · Nion (Spiritual Depth)</option>
+            <option value="alder">Alder · Fearn (Courage)</option>
+            <option value="willow">Willow · Saille (Intuition)</option>
+            <option value="hawthorn">Hawthorn · Huath (Patience)</option>
+            <option value="oak">Oak · Duir (Strength &amp; Shelter)</option>
+            <option value="holly">Holly · Tinne (Honour &amp; Nobility)</option>
+            <option value="vine">Vine · Muin (Harmony)</option>
+            <option value="ivy">Ivy · Gort (Resilience)</option>
+            <option value="reed">Reed · Ngetal (Clarity)</option>
+            <option value="elder">Elder · Ruis (Restoration)</option>
+          </select>
+        </div>
+        <div class="r-field"><label class="r-lab" for="dct-area">Dublin area or Eircode</label><input id="dct-area" name="area" type="text" maxlength="80" autocomplete="off" placeholder="e.g. D06 W2N8 or Rathmines"></div>
+      </div>
+      <label class="r-consent"><input type="checkbox" name="consent" required> <span>I agree to receive seasonal tree delivery coordination and woodland growth certification. <a href="https://conorcparis.github.io/orignal-dublin-christmas-trees/privacy.html" target="_blank" rel="noopener">How we use your details</a>.</span></label>
+      <p class="r-status" role="status" aria-live="polite"></p>
+      <button class="r-btn r-primary" type="submit">Sign up &amp; Reserve Tree <span aria-hidden="true">✓</span></button>
+    </form>
+  </div>
+  <div class="r-done" tabindex="-1" hidden>
+    <div class="r-tree" aria-hidden="true">🌲</div>
+    <h3 class="r-done-title">Go raibh maith agat!</h3>
+    <p class="r-done-text"></p>
+    <textarea class="r-summary" readonly rows="9" aria-label="Your reservation request" hidden></textarea>
+    <div class="r-actions" hidden>
+      <button type="button" class="r-btn r-alt r-copy">Copy the text</button>
+      <a class="r-btn r-alt r-gmail" target="_blank" rel="noopener" href="#">Open in Gmail</a>
+      <a class="r-btn r-alt r-outlook" target="_blank" rel="noopener" href="#">Open in Outlook</a>
+      <a class="r-btn r-alt r-mailapp" target="_top" href="#">Email app</a>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var EMAIL = 'theoriginaldublinchristmastree@gmail.com';
+  var FORM_ENDPOINT = 'https://formsubmit.co/ajax/' + EMAIL;                    // email alert to the owner (FormSubmit, no key)
+  var ORDERS = 'https://dublin-trees-orders.conor-0a0.workers.dev';               // the orders database (gives the reference number)
+  var root = document.getElementById('dct-reserve'); if (!root) return;
+  var $ = function (s) { return root.querySelector(s); }, $$ = function (s) { return Array.prototype.slice.call(root.querySelectorAll(s)); };
+  var form = $('.r-form'), formBox = $('.r-form-box'), okBox = $('.r-done'), status = $('.r-status'), certBox = $('.r-cert'), treeSel = $('#dct-tree');
+
+  function wantsCert() { return $$('input[name="interest"]:checked').some(function (b) { return b.value !== 'Christmas tree'; }); }
+  function syncCert() { var on = wantsCert(); certBox.hidden = !on; $('#dct-cert-name').required = on; }
+  $$('input[name="interest"]').forEach(function (b) { b.addEventListener('change', syncCert); });
+  function certDetails() {
+    if (certBox.hidden) return {};
+    var o = { cert_name: $('#dct-cert-name').value.trim() }, f = $('#dct-cert-from').value.trim(), m = $('#dct-cert-message').value.trim();
+    if (f) o.cert_from = f; if (m) o.cert_message = m; return o;
+  }
+  function certText(c) { return c && c.cert_name ? '\n\nCertificate / gift card details\nName on it: ' + c.cert_name + (c.cert_from ? '\nFrom: ' + c.cert_from : '') + (c.cert_message ? '\nMessage: ' + c.cert_message : '') : ''; }
+  function say(m) { status.textContent = m || ''; }
+  function showDone(title, text, details) {
+    formBox.hidden = true; okBox.hidden = false;
+    $('.r-done-title').textContent = title; $('.r-done-text').textContent = text;
+    var box = $('.r-summary'); box.value = details || ''; box.hidden = !details; $('.r-actions').hidden = !details;
+    okBox.scrollIntoView({ block: 'center' }); okBox.focus({ preventScroll: true });
+  }
+  function timed(url, opts) {
+    var c = new AbortController(), t = setTimeout(function () { c.abort(); }, 10000);
+    opts.signal = c.signal;
+    return fetch(url, opts).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw e; });
+  }
+  function saveOrder(d) {
+    return timed(ORDERS + '/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ name: d.name, email: d.email, interests: d.interests, tree: d.tree, area: d.area, consent: true }, d.cert)) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j || !j.ok || !j.ref) throw new Error('not saved'); return j.ref; }); });
+  }
+  function alertOwner(d, text) {
+    return timed(FORM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(Object.assign({ _subject: 'Tree reservation 2026: ' + d.name + (d.ref ? ' (' + d.ref + ')' : ''), _template: 'table', _captcha: 'false',
+        name: d.name, email: d.email, interests: d.interests.join(', '), tree: d.tree, area: d.area || '(not given)' }, d.cert, { message: text })) })
+      .then(function (r) { if (!r.ok) throw new Error('status ' + r.status); return r.json(); })
+      .then(function (j) { if (j && (j.success === true || j.success === 'true' || /activation/i.test(String(j.message || '')))) return; throw new Error('not accepted'); });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault(); say('');
+    if (form.elements.website.value) { showDone('Go raibh maith agat!', 'Thank you.', ''); return; }      // hidden field filled in: a bot
+    var interests = $$('input[name="interest"]:checked').map(function (b) { return b.value; });
+    if (!interests.length) { say('Please tick at least one thing you are interested in.'); return; }
+    if (!form.checkValidity()) { var bad = form.querySelector(':invalid'); say(bad && bad.type === 'checkbox' ? 'Please tick the box to agree to be contacted.' : 'Please fill in your name, a valid email' + (wantsCert() ? ' and the name on the certificate.' : '.')); if (bad) bad.focus(); return; }
+    var d = { name: form.elements.name.value.trim(), email: form.elements.email.value.trim(), interests: interests,
+      tree: treeSel.options[treeSel.selectedIndex].text, area: form.elements.area.value.trim(), cert: certDetails() };
+    var text = 'Tree reservation request from the website\n\nName: ' + d.name + '\nEmail: ' + d.email + '\nInterested in: ' + interests.join(', ') +
+      '\nCircle of Life tree: ' + d.tree + '\nDublin area or Eircode: ' + (d.area || '(not given)') + certText(d.cert) +
+      '\n\nThe sender agreed to be contacted about tree delivery and woodland certification.\nSent: ' + new Date().toISOString();
+    var btn = form.querySelector('button[type="submit"]');
+    function received(ref) { btn.disabled = false; say(''); showDone('Go raibh maith agat!', 'Your reservation request has been received.' + (ref ? ' Your reference is ' + ref + '.' : '') + ' We will email you at ' + d.email + ' to confirm.', ''); }
+    function viaOwnEmail() {                                                         // last resort: the visitor sends it from their own email
+      var subj = 'Tree reservation 2026: ' + d.name;
+      $('.r-mailapp').href = 'mailto:' + EMAIL + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
+      $('.r-gmail').href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(EMAIL) + '&su=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
+      $('.r-outlook').href = 'https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(EMAIL) + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
+      btn.disabled = false; say('');
+      showDone('One more step: send the email', 'We could not send it from this page. Your request is written out below: send it with Gmail, Outlook or your email app, or copy the text and email it to ' + EMAIL + '.', text);
+    }
+    btn.disabled = true; say('Sending…');
+    saveOrder(d).then(function (ref) {
+      d.ref = ref; alertOwner(d, text + '\nReference: ' + ref).catch(function () { /* only an alert: the order is saved */ }); received(ref);
+    }, function () {
+      alertOwner(d, text).then(function () { received(''); }, viaOwnEmail);         // database not reachable from this page: email the owner directly
+    });
+  });
+  $('.r-copy').addEventListener('click', function () {
+    var box = $('.r-summary'), btn = this, ok = false; box.focus(); box.select();
+    try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+    if (ok) { btn.textContent = 'Copied'; return; }
+    if (navigator.clipboard) navigator.clipboard.writeText(box.value).then(function () { btn.textContent = 'Copied'; }, function () { btn.textContent = 'Press Ctrl+C'; });
+  });
+})();
+</script>
+</section>
