@@ -187,6 +187,19 @@
   }
   form.addEventListener('input', sync); form.addEventListener('change', sync); sync();
 
+  // A Celtic tree picked elsewhere (the tree list on this page, or ?tree=oak in the address): choose it here and make it a sponsorship.
+  function pickTree(name, scroll) {
+    name = String(name || '').toLowerCase(); if (!/^[a-z]{2,10}$/.test(name)) return;
+    var t = $('tree'), i;
+    for (i = 0; i < t.options.length; i++) if (t.options[i].text.toLowerCase().indexOf(name + ' ') === 0) { t.selectedIndex = i; break; }
+    if (i === t.options.length) return;
+    if (what.value === 'tree') what.value = 'tree+sponsor';
+    sync();
+    if (scroll) root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.addEventListener('dct-pick-tree', function (e) { pickTree(e.detail, true); });
+  try { var q = new URLSearchParams(window.location.search).get('tree'); if (q) pickTree(q, false); } catch (_) {}
+
   function say(t) { status.textContent = t || ''; }
   function areaText() {
     if (area.value === 'other') return $('eircode').value.trim().slice(0, 40) || 'Other (not given)';
