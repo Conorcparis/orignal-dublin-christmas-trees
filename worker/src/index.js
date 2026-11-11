@@ -14,7 +14,7 @@
 
 const ALLOWED_ORIGINS = ['https://conorcparis.github.io', 'https://temp-llxnuoadqiiujerfpvlv.webadorsite.com', 'https://www.theoriginaldublinchristmastrees.ie', 'https://theoriginaldublinchristmastrees.ie'];  // the GitHub site and the Webador site (temporary address + its real domain)
 // localhost is added by the ALLOW_LOCAL variable for local testing only
-const INTERESTS = ['Christmas tree', 'Tree sponsorship', 'Gift certificate'];
+const INTERESTS = ['Christmas tree', 'Tree sponsorship', 'Gift certificate', 'Celtic astrology certificate'];   // astrology (birth-tree) certificates are a separate kind from sponsorship ones
 const STATUSES = ['new', 'confirmed', 'paid', 'done', 'cancelled'];
 const REF_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';                   // no 0, O, 1, I, L: references are read out and typed
 const MAX_BODY = 8192;

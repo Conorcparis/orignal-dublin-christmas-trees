@@ -35,6 +35,8 @@ test('CORS: only the website may call; preflight answered; strangers refused', a
   assert.equal((await post(mkEnv({ ALLOW_LOCAL: '1' }), GOOD, { Origin: 'http://localhost:8765' })).status, 201);
   assert.equal((await post(env, GOOD, { Origin: 'https://temp-llxnuoadqiiujerfpvlv.webadorsite.com', 'CF-Connecting-IP': '1.1.1.7' })).status, 201, 'the Webador page may send orders');
   assert.equal((await post(env, GOOD, { Origin: 'https://www.theoriginaldublinchristmastrees.ie', 'CF-Connecting-IP': '1.1.1.9' })).status, 201, 'the real domain may send orders');
+  const astro = await post(env, { ...GOOD, interests: ['Celtic astrology certificate'], cert_name: 'Mam' }, { 'CF-Connecting-IP': '1.1.1.10' });
+  assert.equal(astro.status, 201, 'an astrology certificate is its own kind of order');
   assert.equal((await post(env, GOOD, { Origin: 'https://other-site.webadorsite.com', 'CF-Connecting-IP': '1.1.1.8' })).status, 403, 'another Webador site may not');
 });
 

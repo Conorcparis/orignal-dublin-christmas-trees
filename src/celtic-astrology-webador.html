@@ -112,7 +112,7 @@ document.addEventListener('click', function (e) {
     row.classList.add('is-mine');
     var b = document.createElement('strong'); b.textContent = name + ' (' + irish + ')';
     var a = document.createElement('a'); a.className = 'a-btn a-btn-main'; a.href = row.getAttribute('href'); a.setAttribute('data-tree', row.getAttribute('data-tree'));
-    a.textContent = 'Sponsor your ' + name + ' tree';
+    a.textContent = 'Get your ' + name + ' astrology certificate';
     a.addEventListener('click', function (e) { if (!document.getElementById('dct-sponsor')) return; e.preventDefault(); document.dispatchEvent(new CustomEvent('dct-pick-tree', { detail: row.getAttribute('data-tree') })); });
     out.appendChild(document.createTextNode('Your Celtic tree is ')); out.appendChild(b); out.appendChild(document.createTextNode('.'));
     out.appendChild(document.createElement('br')); out.appendChild(a);

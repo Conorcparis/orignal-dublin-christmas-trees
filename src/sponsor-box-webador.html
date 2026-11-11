@@ -55,6 +55,7 @@
           <select id="dct-o-what" name="what" required>
             <option value="sponsor">Sponsor a tree (certificate for me or my family)</option>
             <option value="gift">A gift certificate for someone else</option>
+            <option value="astro">Celtic astrology certificate (your birth tree)</option>
           </select>
         </div>
 
@@ -130,8 +131,8 @@
   var SHOP = 'theoriginaldublinchristmastree@gmail.com';
   var root = document.getElementById('dct-sponsor'), $ = function (id) { return document.getElementById('dct-o-' + id); };
   var form = $('form'), what = $('what'), status = $('status'), btn = $('send');
-  var WANTS = { 'sponsor': ['Tree sponsorship'], 'gift': ['Gift certificate'] };
-  var LABEL = { 'sponsor': 'Sponsor a native tree', 'gift': 'Gift certificate' };
+  var WANTS = { 'sponsor': ['Tree sponsorship'], 'gift': ['Gift certificate'], 'astro': ['Celtic astrology certificate'] };
+  var LABEL = { 'sponsor': 'Sponsorship certificate', 'gift': 'Gift certificate', 'astro': 'Celtic astrology certificate' };   // astrology certificates are a separate kind: marked as such in the email and the order list
 
   $('cname').required = true;
 
@@ -141,6 +142,7 @@
     var t = $('tree'), i;
     for (i = 0; i < t.options.length; i++) if (t.options[i].text.toLowerCase().indexOf(name + ' ') === 0) { t.selectedIndex = i; break; }
     if (i === t.options.length) return;
+    what.value = 'astro';   // a tree picked from the Celtic astrology page = an astrology certificate
     if (scroll) root.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   document.addEventListener('dct-pick-tree', function (e) { pickTree(e.detail, true); });
@@ -167,21 +169,22 @@
       cert_name: $('cname').value.trim(), cert_from: $('cfrom').value.trim(), cert_message: $('cmsg').value.trim() };
     if (!d.name) { say('Please type your name.'); $('name').focus(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) { say('Please check your email address.'); $('email').focus(); return; }
+    if (d.what === 'astro' && !$('tree').value) { say('Please choose the Celtic tree for the astrology certificate.'); $('tree').focus(); return; }
     if (!d.cert_name) { say('Please type the name for the certificate.'); $('cname').focus(); return; }
     if (!$('consent').checked) { say('Please tick the box to agree we can contact you about your sponsorship.'); $('consent').focus(); return; }
-    var text = 'Sponsorship order from the website\n\nWhat: ' + LABEL[d.what] + '\nName: ' + d.name + '\nEmail: ' + d.email + '\nCeltic tree: ' + d.tree +
+    var text = LABEL[d.what].toUpperCase() + ': order from the website\n\nWhat: ' + LABEL[d.what] + '\nName: ' + d.name + '\nEmail: ' + d.email + '\nCeltic tree: ' + d.tree +
       '\n\nCertificate\nName on it: ' + d.cert_name + (d.cert_from ? '\nFrom: ' + d.cert_from : '') + (d.cert_message ? '\nMessage: ' + d.cert_message : '') +
       '\n\nThe customer agreed to be contacted about the sponsorship and certificate.';
-    btn.disabled = true; say('Sending...');
+    btn.disabled = true; say('Sending... this can take up to half a minute.');
     var why = { list: 'not tried', mail: 'not tried' };   // shown in small print on the fallback screen, so the owner can send it to us
 
     function mail(ref) {
       why.mail = 'not tried';
-      var body = { _subject: 'Tree sponsorship 2026: ' + d.name + (ref ? ' (' + ref + ')' : ' (NOT in the order list: add it from this email)'), _template: 'table', _captcha: 'false',
-        _autoresponse: 'Thank you for sponsoring a native Irish tree with The Original Dublin Christmas Trees.' + (ref ? ' Your reference is ' + ref + '.' : '') + ' We will be in touch soon to confirm the details. Go raibh maith agat!',
-        reference: ref || '(none)', what: LABEL[d.what], name: d.name, email: d.email, celtic_tree: d.tree };
+      var body = { _subject: LABEL[d.what] + ' 2026: ' + d.name + (ref ? ' (' + ref + ')' : ' (NOT in the order list: add it from this email)'), _template: 'table', _captcha: 'false',
+        _autoresponse: 'Thank you for your ' + (d.what === 'astro' ? 'Celtic astrology certificate' : d.what === 'gift' ? 'gift certificate' : 'tree sponsorship') + ' with The Original Dublin Christmas Trees.' + (ref ? ' Your reference is ' + ref + '.' : '') + ' We will be in touch soon to confirm the details. Go raibh maith agat!',
+        reference: ref || '(none)', certificate_type: LABEL[d.what], name: d.name, email: d.email, celtic_tree: d.tree };
       body.certificate_name = d.cert_name; if (d.cert_from) body.certificate_from = d.cert_from; if (d.cert_message) body.certificate_message = d.cert_message;
-      return timed(MAILER, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(body) }, 12000)
+      return timed(MAILER, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(body) }, 45000)
         .then(function (r) { return r.json(); })
         .then(function (j) { if (j && (j.success === true || j.success === 'true' || /activation/i.test(String(j.message || '')))) return true; why.mail = 'refused: ' + String(j && j.message || 'no answer').slice(0, 120); throw new Error('mail'); }, function (e) { if (why.mail === 'not tried') why.mail = 'blocked: ' + (e && e.name || 'error'); throw e; });
     }
@@ -191,7 +194,7 @@
     }
     function manual() {
       btn.disabled = false; say('');
-      var subj = 'Tree sponsorship 2026: ' + d.name;
+      var subj = LABEL[d.what] + ' 2026: ' + d.name;
       $('copytext').value = text;
       $('tech').textContent = 'Technical: page ' + window.location.origin + ' | order list ' + why.list + ' | email ' + why.mail;
       $('gmail').href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(SHOP) + '&su=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
