@@ -1,0 +1,2 @@
+/* Admin page: the dark header bar (kept out of inline styles, which the page's Content-Security-Policy blocks). */
+.admin-head { background-color: #002244; color: #fff; }
