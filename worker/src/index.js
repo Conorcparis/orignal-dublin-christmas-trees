@@ -5,13 +5,15 @@
  *   GET    /api/admin/reservations      owner: list (?status=&q=), newest 500
  *   PATCH  /api/admin/reservations/:ref owner: change status or notes
  *   DELETE /api/admin/reservations/:ref owner: erase one reservation (data-protection requests)
+ *   POST   /api/admin/import            owner: paste an order email, it becomes an order with a unique certificate code
  *   GET    /api/admin/export.csv        owner: everything as CSV
  *
  * The owner routes need "Authorization: Bearer <ADMIN_TOKEN>" (a long random secret set with `wrangler secret put`, never in the repository).
  * No cookies, no tracking. IP addresses are never stored: only a salted one-way hash is kept, and a row is deleted as soon as its window (an hour, or a day for an email address) is over.
  */
 
-const ALLOWED_ORIGINS = ['https://conorcparis.github.io'];                 // the website; localhost is added by the ALLOW_LOCAL variable for local testing only
+const ALLOWED_ORIGINS = ['https://conorcparis.github.io', 'https://temp-llxnuoadqiiujerfpvlv.webadorsite.com'];  // the website and the Webador page (temporary Webador address: add the real domain when it has one)
+// localhost is added by the ALLOW_LOCAL variable for local testing only
 const INTERESTS = ['Christmas tree', 'Tree sponsorship', 'Gift certificate'];
 const STATUSES = ['new', 'confirmed', 'paid', 'done', 'cancelled'];
 const REF_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';                   // no 0, O, 1, I, L: references are read out and typed
@@ -88,6 +90,47 @@ async function readLimited(request, max) {
   return new TextDecoder().decode(all);
 }
 
+// The headings of the website order form (the Webador form), exactly as they appear in the email it sends.
+const ORDER_LABELS = ['What would you like?', 'Name on the certificate', 'Tree', 'From', 'Personal message', 'Your name', 'Your email', 'Your phone', 'Dublin area or Eircode', 'Needed by', 'Gift amount', 'How should it reach them?', 'Consent', 'email'];
+/** Reads a pasted order email: each heading on its own line with the value on the next line (or after a tab or a colon on the same line). */
+function parseOrderEmail(text) {
+  const lines = String(text || '').replace(/\r/g, '').split('\n').map((l) => l.trim());
+  const byLower = new Map(ORDER_LABELS.map((l) => [l.toLowerCase(), l]));
+  const found = {};
+  for (let i = 0; i < lines.length; i++) {
+    let label = byLower.get(lines[i].toLowerCase()), value = '';
+    if (label) {
+      let j = i + 1; while (j < lines.length && lines[j] === '') j++;
+      if (j < lines.length && !byLower.has(lines[j].toLowerCase())) { value = lines[j]; i = j; }
+    } else {
+      const m = lines[i].match(/^(.{2,40}?)\s*(?:\t|:\s)\s*(.*)$/);
+      if (m && byLower.has(m[1].trim().toLowerCase())) { label = byLower.get(m[1].trim().toLowerCase()); value = m[2]; }
+    }
+    if (label && found[label] === undefined) found[label] = value;
+  }
+  return found;
+}
+/** Turns the pasted fields into a reservation, or says what is missing. */
+function orderFromEmail(found) {
+  const gift = (found['What would you like?'] || '').toLowerCase().includes('gift');
+  const o = { name: clean(found['Your name'] || found['From'], LIMITS.name), email: clean(found['Your email'] || found['email'], LIMITS.email).toLowerCase(),
+    tree: clean(found['Tree'], LIMITS.tree), area: clean(found['Dublin area or Eircode'], LIMITS.area),
+    cert_name: clean(found['Name on the certificate'], LIMITS.cert_name), cert_from: clean(found['From'], LIMITS.cert_from), cert_message: clean(found['Personal message'], LIMITS.cert_message),
+    interests: gift ? 'Gift certificate' : 'Tree sponsorship' };
+  const notes = [];
+  if (clean(found['Your phone'], 40)) notes.push('Phone: ' + clean(found['Your phone'], 40));
+  const amt = clean(found['Gift amount'], 20).replace(',', '.').replace(/[^0-9.]/g, '');
+  if (gift && amt && +amt > 0) notes.push('Amount: \u20AC' + amt);
+  if (clean(found['Needed by'], 20)) notes.push('Needed by: ' + clean(found['Needed by'], 20));
+  if (clean(found['How should it reach them?'], 40)) notes.push('Delivery: ' + clean(found['How should it reach them?'], 40));
+  o.notes = notes.join('\n');
+  const errors = {};
+  if (!o.name) errors.name = 'required';
+  if (!EMAIL.test(o.email)) errors.email = 'invalid';
+  if (!o.cert_name) errors.cert_name = 'required';
+  return { o, errors, kind: gift ? 'gift' : 'cert' };
+}
+
 function validate(b) {
   const errors = {};
   const out = { name: clean(b.name, LIMITS.name), email: clean(b.email, LIMITS.email).toLowerCase(), tree: clean(b.tree, LIMITS.tree), area: clean(b.area, LIMITS.area),
@@ -131,9 +174,12 @@ async function handleSubmit(request, env, cors) {
 }
 
 async function authorised(request, env) {
-  if (!env.ADMIN_TOKEN || String(env.ADMIN_TOKEN).length < 24) return false;       // refuse to run with a weak or missing token
-  const h = request.headers.get('Authorization') || '';
-  return h.startsWith('Bearer ') && timingSafeEqual(h.slice(7), env.ADMIN_TOKEN);
+  // ADMIN_TOKEN is the owner's key; RONAN_TOKEN (optional) is a second key for the person who makes the certificates. Both are long random Worker secrets.
+  const h = request.headers.get('Authorization') || ''
+  if (!h.startsWith('Bearer ')) return false;
+  let ok = false;
+  for (const t of [env.ADMIN_TOKEN, env.RONAN_TOKEN]) if (t && String(t).length >= 24 && timingSafeEqual(h.slice(7), t)) ok = true;   // a weak or missing token never matches
+  return ok;
 }
 
 const csvCell = (v) => { let s = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };    // a cell starting with = + - @ would run as a formula in a spreadsheet
@@ -155,6 +201,26 @@ async function handleAdmin(request, env, url, cors) {
     if (q) { where.push('(lower(name) LIKE ? OR lower(email) LIKE ? OR lower(ref) LIKE ? OR lower(cert_name) LIKE ?)'); const like = '%' + q.replace(/[%_]/g, '') + '%'; args.push(like, like, like, like); }
     const rows = await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes FROM reservations' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY created_at DESC LIMIT 500').bind(...args).all();
     return json({ ok: true, reservations: rows.results || [] }, 200, nostore);
+  }
+  if (path === '/api/admin/import' && request.method === 'POST') {
+    // Paste in an order email: it becomes an order with its own unique certificate code (the reference).
+    let raw; try { raw = await readLimited(request, MAX_BODY); } catch { return json({ ok: false, error: 'bad_request' }, 400, nostore); }
+    if (raw === null) return json({ ok: false, error: 'too_large' }, 413, nostore);
+    let b; try { b = JSON.parse(raw); } catch { return json({ ok: false, error: 'bad_json' }, 400, nostore); }
+    const { o, errors, kind } = orderFromEmail(parseOrderEmail(b && b.text));
+    if (Object.keys(errors).length) return json({ ok: false, error: 'invalid', fields: errors }, 400, nostore);
+    const now = new Date().toISOString();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const ref = newRef();
+      try {
+        await env.DB.prepare('INSERT INTO reservations(ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes, consent_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'new\', ?, ?)')
+          .bind(ref, now, o.name, o.email, o.interests, o.tree, o.area, o.cert_name, o.cert_from, o.cert_message, o.notes, now).run();
+        return json({ ok: true, kind, reservation: { ref, created_at: now, name: o.name, email: o.email, interests: o.interests, tree: o.tree, area: o.area, cert_name: o.cert_name, cert_from: o.cert_from, cert_message: o.cert_message, status: 'new', notes: o.notes } }, 201, nostore);
+      } catch (e) {
+        if (!/UNIQUE/i.test(String(e && e.message))) return json({ ok: false, error: 'server' }, 500, nostore);
+      }
+    }
+    return json({ ok: false, error: 'server' }, 500, nostore);
   }
   if (path === '/api/admin/export.csv' && request.method === 'GET') {
     const rows = (await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes FROM reservations ORDER BY created_at DESC').all()).results || [];

@@ -33,6 +33,8 @@ test('CORS: only the website may call; preflight answered; strangers refused', a
   assert.equal(rows(env).length, 0);
   assert.equal((await post(env, GOOD, { Origin: 'http://localhost:8765' })).status, 403, 'localhost is refused unless ALLOW_LOCAL is set');
   assert.equal((await post(mkEnv({ ALLOW_LOCAL: '1' }), GOOD, { Origin: 'http://localhost:8765' })).status, 201);
+  assert.equal((await post(env, GOOD, { Origin: 'https://temp-llxnuoadqiiujerfpvlv.webadorsite.com', 'CF-Connecting-IP': '1.1.1.7' })).status, 201, 'the Webador page may send orders');
+  assert.equal((await post(env, GOOD, { Origin: 'https://other-site.webadorsite.com', 'CF-Connecting-IP': '1.1.1.8' })).status, 403, 'another Webador site may not');
 });
 
 test('a good reservation is stored and answered with a reference', async () => {
@@ -183,4 +185,36 @@ test('the admin page never puts reservation data into the page as markup', () =>
   const js = fs.readFileSync(new URL('../../docs/js/admin.js', import.meta.url), 'utf8');
   assert.ok(!/innerHTML\s*[+]?=\s*[^;]*\b(r|row|res|reservation|data|d)\./.test(js), 'reservation fields must go in with textContent');
   assert.ok(!js.includes('eval(') && !js.includes('document.write'));
+});
+
+test('pasting an order email makes an order with its own certificate code (owner key or Ronan key)', async () => {
+  const EMAILTXT = ['What would you like?', '', 'Sponsorship certificate', 'Name on the certificate', '', 'Anne Doyle', 'Tree', '', 'Reed (Ngetal)', 'From', '', 'Tommy boy',
+    'Personal message', '', 'happy christmas', 'Your name', '', 'Tommy boy', 'Your email', '', 'conorc33@gmail.com', 'Your phone', '', 'Dublin area or Eircode', '', 'D4',
+    'Needed by', '', '2026-12-15', 'email', '', 'conorc33@gmail.com', 'Consent', '', 'Yes'].join('\n');
+  const env = mkEnv({ RONAN_TOKEN: 'R'.repeat(40) });
+  const r = await admin(env, '/api/admin/import', { method: 'POST', body: { text: EMAILTXT }, token: 'R'.repeat(40) });
+  const j = await r.json();
+  assert.equal(r.status, 201); assert.match(j.reservation.ref, /^R-[A-Z2-9]{6}$/); assert.equal(j.kind, 'cert');
+  assert.equal(j.reservation.cert_name, 'Anne Doyle'); assert.equal(j.reservation.tree, 'Reed (Ngetal)'); assert.equal(j.reservation.cert_from, 'Tommy boy'); assert.equal(j.reservation.area, 'D4');
+  assert.equal(j.reservation.email, 'conorc33@gmail.com'); assert.match(j.reservation.notes, /Needed by: 2026-12-15/); assert.doesNotMatch(j.reservation.notes, /Phone/, 'empty phone is left out');
+  assert.equal(rows(env).length, 1);
+  const again = await (await admin(env, '/api/admin/import', { method: 'POST', body: { text: EMAILTXT } })).json();
+  assert.notEqual(again.reservation.ref, j.reservation.ref, 'every certificate gets its own code');
+  assert.equal((await admin(env, '/api/admin/import', { method: 'POST', body: { text: EMAILTXT }, token: 'x'.repeat(40) })).status, 401);
+  assert.equal((await admin(env, '/api/admin/import', { method: 'POST', body: { text: 'hello' } })).status, 400, 'no headings found: refused, nothing stored');
+  const gift = await (await admin(env, '/api/admin/import', { method: 'POST', body: { text: EMAILTXT.replace('Sponsorship certificate', 'Gift card') } })).json();
+  assert.equal(gift.kind, 'gift'); assert.equal(rows(env).length, 3);
+  const tab = await (await admin(env, '/api/admin/import', { method: 'POST', body: { text: 'Name on the certificate\tBen\nYour name\tAmy\nYour email\tamy@example.ie' } })).json();
+  assert.equal(tab.reservation.cert_name, 'Ben', 'heading and value on one line also works');
+});
+
+test('a gift card order carries its amount; a certificate ignores it', async () => {
+  const mail = (kind, amount) => ['What would you like?', '', kind, 'Name on the certificate', '', 'Mia', 'Tree', '', 'Let them choose (gift card only)', 'From', '', 'Zoe', 'Your name', '', 'Zoe', 'Your email', '', 'zoe@example.ie', 'Gift amount', '', amount].join('\n');
+  const env = mkEnv();
+  const g = await (await admin(env, '/api/admin/import', { method: 'POST', body: { text: mail('Gift card', '\u20AC 75,50') } })).json();
+  assert.equal(g.kind, 'gift'); assert.match(g.reservation.notes, /Amount: \u20AC75\.50/);
+  const c = await (await admin(env, '/api/admin/import', { method: 'POST', body: { text: mail('Sponsorship certificate', '50') } })).json();
+  assert.doesNotMatch(c.reservation.notes, /Amount/);
+  const bad = await (await admin(env, '/api/admin/import', { method: 'POST', body: { text: mail('Gift card', 'lots') } })).json();
+  assert.doesNotMatch(bad.reservation.notes, /Amount/, 'a non-number is left out');
 });
