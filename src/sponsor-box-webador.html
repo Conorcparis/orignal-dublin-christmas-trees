@@ -11,8 +11,7 @@
 #dct-sponsor{--o-ink:#002244;--o-blue:#004B87;--o-green:#1C3A2C;--o-gold:#B08D3C;--o-text:#2B3440;--o-muted:#5B6673;--o-line:rgba(0,34,68,.16);--o-bg:#FBF8F1;--o-field:#F3F6F9;
   background:var(--o-bg);color:var(--o-text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:16px;line-height:1.55;padding:40px 16px;box-sizing:border-box;width:100%}
 #dct-sponsor *,#dct-sponsor *::before,#dct-sponsor *::after{box-sizing:border-box}
-#dct-sponsor .o-wrap{max-width:1080px;margin:0 auto;display:grid;gap:28px;grid-template-columns:minmax(0,1fr)}
-@media (min-width:900px){#dct-sponsor .o-wrap{grid-template-columns:minmax(0,7fr) minmax(0,5fr);align-items:start}#dct-sponsor .o-side{position:sticky;top:24px}}
+#dct-sponsor .o-wrap{max-width:720px;margin:0 auto}
 #dct-sponsor .o-card{background:#fff;border:1px solid var(--o-line);border-radius:14px;padding:24px;box-shadow:0 10px 30px -20px rgba(0,34,68,.45)}
 @media (min-width:600px){#dct-sponsor .o-card{padding:32px}}
 #dct-sponsor h2,#dct-sponsor h3{font-family:Georgia,'Times New Roman',serif;color:var(--o-ink);font-weight:600;margin:0 0 6px;line-height:1.2}
@@ -41,17 +40,6 @@
 #dct-sponsor .o-btn:focus-visible{outline:3px solid var(--o-gold);outline-offset:3px}
 #dct-sponsor .o-status{min-height:1.3em;font-size:14px;color:#9B1C1C;margin:0}
 #dct-sponsor .o-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-/* certificate preview */
-#dct-sponsor .o-sheet{background:#FCFDF9;border:1px solid rgba(176,141,60,.45);border-radius:10px;padding:26px 20px;text-align:center;box-shadow:inset 0 0 0 6px #fff,inset 0 0 0 7px rgba(176,141,60,.35)}
-#dct-sponsor .o-kicker{font:700 11px/1.4 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--o-green);margin:0 0 6px}
-#dct-sponsor .o-sheet h3{font-size:22px;margin-bottom:8px}
-#dct-sponsor .o-sheet .o-small{font-size:13px;font-style:italic;color:var(--o-muted);margin-bottom:16px}
-#dct-sponsor .o-box{background:var(--o-field);border-radius:8px;padding:10px 12px;margin:0 0 10px;text-align:left}
-#dct-sponsor .o-box span{display:block}
-#dct-sponsor .o-k{font:600 10px/1.4 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--o-muted)}
-#dct-sponsor .o-v{font-family:Georgia,serif;font-size:18px;color:var(--o-ink);overflow-wrap:anywhere}
-#dct-sponsor .o-m{font-size:14px;font-style:italic;color:var(--o-text);overflow-wrap:anywhere}
-#dct-sponsor .o-note{font-size:13px;color:var(--o-muted);margin:12px 0 0}
 #dct-sponsor .o-hide{display:none!important}
 #dct-sponsor .o-tech{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--o-muted);margin:14px 0 0;overflow-wrap:anywhere}
 /* done */
@@ -133,18 +121,6 @@
     </div>
   </div>
 
-  <aside class="o-side" aria-label="Certificate preview">
-    <div class="o-sheet">
-      <p class="o-kicker" id="dct-o-p-kicker">Circle of Life &middot; Wicklow</p>
-      <h3 id="dct-o-p-title">Certificate of Sponsorship</h3>
-      <p class="o-small">A native Irish tree planted and cared for in the Wicklow Mountains</p>
-      <div class="o-box"><span class="o-k">For</span><span class="o-v" id="dct-o-p-name">Name on the certificate</span></div>
-      <div class="o-box"><span class="o-k">Celtic tree</span><span class="o-v" id="dct-o-p-tree">Chosen for you</span></div>
-      <div class="o-box o-hide" id="dct-o-p-fromrow"><span class="o-k">From</span><span class="o-v" id="dct-o-p-from"></span></div>
-      <div class="o-box o-hide" id="dct-o-p-msgrow"><span class="o-k">Message</span><span class="o-m" id="dct-o-p-msg"></span></div>
-    </div>
-    <p class="o-note" id="dct-o-p-note">Your certificate, as it will read. Not sure which tree? Leave it on "choose for me", or find your birth tree on our Celtic Tree Astrology page.</p>
-  </aside>
 </div>
 
 <script>
@@ -157,16 +133,7 @@
   var WANTS = { 'sponsor': ['Tree sponsorship'], 'gift': ['Gift certificate'] };
   var LABEL = { 'sponsor': 'Sponsor a native tree', 'gift': 'Gift certificate' };
 
-  function sync() {
-    $('cname').required = true;
-    $('p-title').textContent = what.value === 'gift' ? 'Gift Certificate' : 'Certificate of Sponsorship';
-    $('p-name').textContent = $('cname').value.trim() || 'Name on the certificate';
-    var t = $('tree'); $('p-tree').textContent = t.value ? t.value : 'Chosen for you';
-    var f = $('cfrom').value.trim(), m = $('cmsg').value.trim();
-    $('p-from').textContent = f; $('p-fromrow').classList.toggle('o-hide', !f);
-    $('p-msg').textContent = m; $('p-msgrow').classList.toggle('o-hide', !m);
-  }
-  form.addEventListener('input', sync); form.addEventListener('change', sync); sync();
+  $('cname').required = true;
 
   // A Celtic tree picked elsewhere (the tree list on this page, or ?tree=oak in the address): choose it here and make it a sponsorship.
   function pickTree(name, scroll) {
@@ -174,7 +141,6 @@
     var t = $('tree'), i;
     for (i = 0; i < t.options.length; i++) if (t.options[i].text.toLowerCase().indexOf(name + ' ') === 0) { t.selectedIndex = i; break; }
     if (i === t.options.length) return;
-    sync();
     if (scroll) root.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   document.addEventListener('dct-pick-tree', function (e) { pickTree(e.detail, true); });
