@@ -36,15 +36,23 @@
 </form></section>
 
 <section id="panel" class="hidden">
-<h1 class="font-display-hero-mobile text-display-hero-mobile text-primary">Reservations</h1>
-<p id="summary" class="font-body-sm text-body-sm text-on-surface-variant mt-2" role="status"></p>
-<div class="flex gap-2 mt-6" role="group" aria-label="View">
-<button type="button" id="v-orders" class="h-11 px-5 rounded bg-primary text-on-primary font-button-text text-button-text" aria-pressed="true">Orders</button>
+<h1 class="font-display-hero-mobile text-display-hero-mobile text-primary">Orders</h1>
+<p id="money" class="font-body-md text-body-md font-semibold text-primary mt-2" role="status"></p>
+<p id="summary" class="font-body-sm text-body-sm text-on-surface-variant" role="status"></p>
+
+<section class="paste-box mt-5" aria-labelledby="paste-h">
+<h2 id="paste-h" class="font-headline-sm text-headline-sm text-primary">Add an order that came by email</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Website orders arrive below by themselves. For an order that came by email, paste the whole email here: it is saved with its own certificate number and appears in today&rsquo;s orders.</p>
+<textarea id="paste" rows="3" maxlength="6000" class="w-full mt-2 px-3 py-2 rounded bg-surface-container text-on-surface font-body-sm" placeholder="Paste the order email here" aria-label="Order email"></textarea>
+<div class="flex flex-wrap items-center gap-3 mt-2"><button type="button" id="paste-go" class="h-11 px-5 rounded bg-primary text-on-primary font-button-text text-button-text hover:opacity-90">Add the order</button><span id="paste-msg" role="status" class="font-body-sm text-body-sm text-secondary"></span></div>
+</section>
+
+<div class="flex flex-wrap gap-2 mt-6" role="group" aria-label="View">
+<button type="button" id="v-days" class="h-11 px-5 rounded bg-primary text-on-primary font-button-text text-button-text" aria-pressed="true">By day</button>
+<button type="button" id="v-board" class="h-11 px-5 rounded bg-surface-container text-primary font-button-text text-button-text" aria-pressed="false">Board</button>
 <button type="button" id="v-customers" class="h-11 px-5 rounded bg-surface-container text-primary font-button-text text-button-text" aria-pressed="false">Customers</button>
 </div>
 <div class="flex flex-wrap items-end gap-3 mt-4">
-<div class="flex flex-col gap-1"><label class="font-label-mono-xs text-label-mono-xs text-primary font-bold uppercase" for="f-status">Show</label>
-<select id="f-status" class="h-11 px-3 rounded bg-surface-container-lowest border border-outline-variant/40"><option value="">All</option><option value="new">New</option><option value="confirmed">Confirmed</option><option value="paid">Paid</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></div>
 <div class="flex flex-col gap-1"><label class="font-label-mono-xs text-label-mono-xs text-primary font-bold uppercase" for="f-kind">Type</label>
 <select id="f-kind" class="h-11 px-3 rounded bg-surface-container-lowest border border-outline-variant/40"><option value="">All types</option><option value="sponsor">Tree sponsorship</option><option value="gift">Gift certificate</option><option value="astro">Celtic astrology certificate</option><option value="tree">Christmas tree</option></select></div>
 <div class="flex flex-col gap-1"><label class="font-label-mono-xs text-label-mono-xs text-primary font-bold uppercase" for="f-q">Search</label>
@@ -53,16 +61,10 @@
 <button type="button" id="export" class="h-11 px-4 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high">Download CSV</button>
 </div>
 <p id="msg" role="status" class="font-body-sm text-body-sm text-error min-h-[1.25rem] mt-2"></p>
-<ul id="list" class="mt-4 flex flex-col gap-4"></ul>
-<div id="customers" class="hidden mt-4 overflow-x-auto"></div>
-<details class="mt-8 bg-surface-container-lowest p-5 rounded-lg shadow-sm" aria-labelledby="paste-h">
-<summary id="paste-h" class="font-headline-sm text-headline-sm text-primary cursor-pointer">Add an order that came by email</summary>
-
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Only for an order that came by email and is not in the list (website orders arrive here by themselves). Paste the whole order email below. It is saved as an order with its own certificate code, and the certificate opens filled in for you to check.</p>
-<textarea id="paste" rows="8" maxlength="6000" class="w-full mt-3 px-3 py-2 rounded bg-surface-container text-on-surface font-body-sm" placeholder="Paste the order email here" aria-label="Order email"></textarea>
-<div class="flex flex-wrap items-center gap-3 mt-3"><button type="button" id="paste-go" class="h-11 px-5 rounded bg-primary text-on-primary font-button-text text-button-text hover:opacity-90">Make the certificate</button><span id="paste-msg" role="status" class="font-body-sm text-body-sm text-error"></span></div>
-</details>
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-8">Customer details are personal data. Erase an order when a customer asks, or when it is no longer needed. Keep your own list of certificate and voucher numbers.</p>
+<div id="list" class="mt-2 flex flex-col gap-3"></div>
+<div id="board" class="board hidden mt-2"></div>
+<div id="customers" class="hidden mt-2 overflow-x-auto"></div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-8">Customer details are personal data. Erase an order when a customer asks, or when it is no longer needed.</p>
 </section>
 </main>
 <script src="js/config.js"></script>

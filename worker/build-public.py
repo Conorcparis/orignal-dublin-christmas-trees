@@ -20,13 +20,22 @@ for f in FILES:
     shutil.copyfile(os.path.join(DOCS, f), os.path.join(OUT, f))
 for d in DIRS:
     shutil.copytree(os.path.join(DOCS, d), os.path.join(OUT, d))
-# "home" and "Back to the site" go to the real website, not to the archive
+# "home" and "Back to the site" go to the real website, not to the archive.
+# Every script and stylesheet link gets the file's fingerprint (?v=...), so a browser can never keep an old copy after a deploy.
+import hashlib, re
+def stamp(m):
+    path = m.group(2); full = os.path.join(OUT, path)
+    if not os.path.isfile(full): return m.group(0)
+    v = hashlib.sha256(open(full, 'rb').read()).hexdigest()[:10]
+    return m.group(1) + path + '?v=' + v + '"'
 for page in ['admin.html', 'certificates.html']:
     p = os.path.join(OUT, page); t = open(p, encoding='utf-8').read()
     t = t.replace('href="./"', 'href="' + SITE + '"')
+    t = re.sub(r'((?:src|href)=")((?:js|css)/[A-Za-z0-9_./-]+\.(?:js|css))"', stamp, t)
     open(p, 'w', encoding='utf-8', newline='\n').write(t)
-# owner tools: never in search results, no sniffing, no framing
+# the pages themselves are always checked for a new version
 with open(os.path.join(OUT, '_headers'), 'w', newline='\n') as h:
-    h.write('/*\n  X-Robots-Tag: noindex, nofollow\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: no-referrer\n')
+    h.write('/*\n  X-Robots-Tag: noindex, nofollow\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: no-referrer\n'
+            '/admin*\n  Cache-Control: no-cache\n/certificates*\n  Cache-Control: no-cache\n')
 n = sum(len(fs) for _, _, fs in os.walk(OUT))
 print('public/ built:', n, 'files')
