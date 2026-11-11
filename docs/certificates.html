@@ -22,7 +22,7 @@
 <a class="font-button-text text-button-text text-white/80 hover:text-white px-3 py-2" href="./">Back to the site</a></div></header>
 <main id="main" class="max-w-7xl mx-auto px-margin-mobile lg:px-margin py-space-xl">
 <div class="no-print mb-space-lg"><h1 class="font-display-hero-mobile text-display-hero-mobile text-primary">Certificate and gift card maker</h1>
-<p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-3xl">For the owner. When a reservation arrives, copy the details from the email into the form, check the preview, then press Print or Save as PDF. Nothing is sent or stored: the sheet is built on this page from what you type. The number is yours to keep track of; the site does not check or remember it.</p></div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-3xl">Opened from an order on the orders page, it is filled in for you. Check it, press <b>Download PDF</b>, then email it to the customer with the buttons that appear below it. Nothing typed here is sent or stored.</p></div>
 <div class="layout grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
 <form id="maker" class="no-print lg:col-span-4 flex flex-col gap-4 bg-surface-container-lowest p-6 rounded-lg shadow-sm" autocomplete="off">
 <fieldset class="flex gap-6"><legend class="font-label-mono-xs text-label-mono-xs text-primary font-bold uppercase mb-2">Make a</legend>
@@ -43,10 +43,12 @@
 <button type="button" id="btn-print" class="px-5 py-3 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high">Print or save as PDF</button>
 <button type="reset" id="btn-reset" class="px-5 py-3 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high">Start again</button></div>
 <p class="font-body-sm text-body-sm text-on-surface-variant"><b>Download PDF</b> saves the certificate as a ready file (landscape, nothing around it): attach that to the email. To print on paper instead, press Print and open <b>More settings</b>: Paper A4 (A5 for a gift card), Margins <b>None</b>, <b>untick "Headers and footers"</b> (otherwise the date and web address print around the certificate) and <b>tick "Background graphics"</b>.</p>
+<div id="emailstep" class="hidden flex flex-col gap-2 p-4 rounded bg-surface-container-low"><p class="font-label-mono-xs text-label-mono-xs text-primary font-bold uppercase">Next: email it</p><p class="font-body-sm text-body-sm">To <b id="es-to"></b>. Attach the PDF you just downloaded.</p><div class="flex flex-wrap gap-2"><button type="button" id="es-copy" class="px-4 py-2 rounded bg-primary text-on-primary font-button-text text-button-text hover:opacity-90">Copy email</button><a id="es-gmail" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high">Open in Gmail</a></div><p class="font-body-sm text-body-sm text-on-surface-variant">When it is sent, go back to the orders tab and press <b>Mark certificate sent</b>.</p></div>
 </form>
 <div class="lg:col-span-8"><div id="sheet" class="sheet sheet-cert" aria-live="polite"></div></div>
 </div></main>
 <script src="js/vendor/html-to-image-1.11.11.js" defer></script>
 <script src="js/vendor/jspdf-2.5.2.umd.min.js" defer></script>
+<script src="js/mailtext.js" defer></script>
 <script src="js/certificate.js" defer></script>
 </body></html>

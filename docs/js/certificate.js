@@ -88,6 +88,19 @@
     var kind = q.get('kind') === 'gift' ? 'gift' : q.get('kind') === 'astro' ? 'astro' : 'cert'; var r = form.querySelector('input[name="kind"][value="' + kind + '"]'); if (r) r.checked = true;
     var tree = (q.get('tree') || '').toLowerCase(); if (tree && treeSel.querySelector('option[value="' + tree.replace(/[^a-z]/g, '') + '"]')) treeSel.value = tree.replace(/[^a-z]/g, '');
     set('amount', q.get('amount')); set('to', q.get('to')); set('from', q.get('from')); set('msg', q.get('msg')); set('no', q.get('no')); set('born', q.get('born'));
+    // From an order: the customer's details, for the email step under Download PDF
+    if (q.get('email') && window.DCTMail) {
+      var order = { email: q.get('email'), name: q.get('cust') || '', interests: q.get('int') || '', tree: q.get('treetext') || '', paid_eur: +(q.get('paid') || 0), paid_at: q.get('settled') ? '1' : '' };
+      var mail = function () { return window.DCTMail(order.name, field('no'), field('to'), order); };
+      $('#es-to').textContent = order.name ? order.name + ' (' + order.email + ')' : order.email;
+      var gm = $('#es-gmail'), setGmail = function () { gm.href = window.DCTGmail(order.email, mail()); };
+      setGmail(); gm.addEventListener('mousedown', setGmail); gm.addEventListener('focus', setGmail);
+      $('#es-copy').addEventListener('click', function () {
+        var b = this, m = mail();
+        window.DCTCopy('To: ' + order.email + '\nSubject: ' + m.subject + '\n\n' + m.body, function () { b.textContent = 'Copied: paste it into your email'; setTimeout(function () { b.textContent = 'Copy email'; }, 4000); });
+      });
+      $('#emailstep').classList.remove('hidden');
+    }
   })();
   form.addEventListener('input', render); form.addEventListener('change', render);
   // Download PDF: the sheet is drawn as a picture at print size and placed on a landscape A4 page (A5 for a gift card).

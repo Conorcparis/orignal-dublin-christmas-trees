@@ -46,7 +46,8 @@
   // address of the certificate maker, filled in for this order
   function certLink(r, kind) {
     var am = /Amount: \u20AC([0-9.]+)/.exec(r.notes || '');
-    var p = new URLSearchParams({ kind: kind, amount: am ? am[1] : '', to: r.cert_name || r.name, from: r.cert_from || '', msg: r.cert_message || '', tree: (r.tree || '').split(/[\s·]/)[0].toLowerCase(), no: r.ref, born: ((r.tree || '').match(/born (\d{1,2} [A-Za-z]+)/) || [])[1] || '' });
+    var p = new URLSearchParams({ email: r.email || '', cust: r.name || '', int: r.interests || '', treetext: r.tree || '', paid: r.paid_eur || '', settled: r.paid_at ? '1' : '',
+      kind: kind, amount: am ? am[1] : '', to: r.cert_name || r.name, from: r.cert_from || '', msg: r.cert_message || '', tree: (r.tree || '').split(/[\s·]/)[0].toLowerCase(), no: r.ref, born: ((r.tree || '').match(/born (\d{1,2} [A-Za-z]+)/) || [])[1] || '' });
     return 'certificates.html#' + p.toString();
   }
   function fmt(iso) { var d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString('en-IE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
@@ -189,28 +190,14 @@
 
   // ---- Customers: one row per email address, sortable; Email opens a ready-written message in the owner's own Gmail or mail app ----
   // The email Ronan sends with the certificate attached (payment received). r = the order; the wording follows the kind of certificate.
-  function mailText(name, ref, certName, r) {
-    r = r || {};
-    var first = (name || '').split(' ')[0] || 'there', interests = r.interests || '', tree = (r.tree || '').split(' (')[0];
-    var kind = /astrology/i.test(interests) ? 'astro' : /gift/i.test(interests) ? 'gift' : 'sponsor';
-    var what = { astro: 'Celtic astrology certificate', gift: 'gift certificate', sponsor: 'tree sponsorship certificate' }[kind];
-    var paid = +r.paid_eur || 0;
-    var lines = ['Hi ' + first + ',', '',
-      (paid ? 'Thank you, we have received your payment of \u20AC' + paid + '. ' : r.paid_at && kind === 'sponsor' ? 'Thank you for buying your Christmas tree with us. ' : 'Thank you for your order. ') + 'Your ' + what + (certName ? ' for ' + certName : '') + (r.paid_at && !paid && kind === 'sponsor' ? ', free with your Christmas tree,' : '') + ' is attached.'];
-    if (kind === 'astro') lines.push('', 'It shows the Celtic birth tree' + (tree ? ', ' + tree : '') + ', with its Ogham sign and meaning. Its symbolic tree stands in our Circle of Life, the Celtic tree astrology circle in the Wicklow Mountains.');
-    else lines.push('', 'A native Irish tree' + (tree && !/not sure/i.test(tree) ? ' (' + tree + ')' : '') + ' is planted in your name in our woodland in the Wicklow Mountains, and cared for as part of our native woodland restoration.');
-    if (ref) lines.push('', 'Your certificate number is ' + ref + '. Keep it: it is how we find your tree.');
-    lines.push('', 'Print it on A4 or keep it as a PDF. If anything on it needs changing, just reply to this email.', '', 'Happy Christmas,', 'Ronan', 'The Original Dublin Christmas Trees', 'theoriginaldublinchristmastree@gmail.com');
-    return { subject: 'Your ' + what + ' from The Original Dublin Christmas Trees' + (ref ? ' (' + ref + ')' : ''), body: lines.join('\n') };
-  }
+  function mailText(name, ref, certName, r) { return window.DCTMail(name, ref, certName, r); }   // js/mailtext.js
   // "Copy email": puts the subject and the text on the clipboard, ready to paste into any mail program with the certificate attached.
   function copyButton(r) {
     var b = el('button', { type: 'button', class: 'px-3 py-2 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high', text: 'Copy email' });
     b.addEventListener('click', function () {
       var m = mailText(r.name, r.ref, r.cert_name, r), all = 'To: ' + r.email + '\nSubject: ' + m.subject + '\n\n' + m.body;
       var ok = function () { b.textContent = 'Copied: paste it into your email'; setTimeout(function () { b.textContent = 'Copy email'; }, 4000); };
-      var old = function () { var ta = document.createElement('textarea'); ta.style.position = 'fixed'; ta.style.opacity = '0'; ta.value = all; document.body.appendChild(ta); ta.select(); var done = false; try { done = document.execCommand('copy'); } catch (e) { done = false; } ta.remove(); if (done) ok(); else window.prompt('Copy this email (Ctrl+C):', all); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(all).then(ok, old); else old();
+      window.DCTCopy(all, ok);
     });
     return b;
   }
