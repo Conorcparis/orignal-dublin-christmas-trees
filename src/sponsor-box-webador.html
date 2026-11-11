@@ -53,6 +53,7 @@
 #dct-sponsor .o-m{font-size:14px;font-style:italic;color:var(--o-text);overflow-wrap:anywhere}
 #dct-sponsor .o-note{font-size:13px;color:var(--o-muted);margin:12px 0 0}
 #dct-sponsor .o-hide{display:none!important}
+#dct-sponsor .o-tech{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--o-muted);margin:14px 0 0;overflow-wrap:anywhere}
 /* done */
 #dct-sponsor .o-done{text-align:center;padding:12px 0}
 #dct-sponsor .o-ref{display:inline-block;font:700 20px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;color:var(--o-ink);background:#EEF4EF;border-radius:8px;padding:8px 14px;margin:6px 0 14px}
@@ -126,6 +127,7 @@
       <div id="dct-o-done-ref" class="o-ref o-hide"></div>
       <div id="dct-o-manual" class="o-hide">
         <textarea class="o-copy" id="dct-o-copytext" readonly aria-label="Your sponsorship"></textarea>
+        <p class="o-tech" id="dct-o-tech"></p>
         <div class="o-links"><button type="button" id="dct-o-copy">Copy the text</button><a id="dct-o-gmail" target="_blank" rel="noopener" href="#">Open in Gmail</a><a id="dct-o-mailto" href="#">Email app</a></div>
       </div>
     </div>
@@ -205,15 +207,17 @@
       '\n\nCertificate\nName on it: ' + d.cert_name + (d.cert_from ? '\nFrom: ' + d.cert_from : '') + (d.cert_message ? '\nMessage: ' + d.cert_message : '') +
       '\n\nThe customer agreed to be contacted about the sponsorship and certificate.';
     btn.disabled = true; say('Sending...');
+    var why = { list: 'not tried', mail: 'not tried' };   // shown in small print on the fallback screen, so the owner can send it to us
 
     function mail(ref) {
+      why.mail = 'not tried';
       var body = { _subject: 'Tree sponsorship 2026: ' + d.name + (ref ? ' (' + ref + ')' : ' (NOT in the order list: add it from this email)'), _template: 'table', _captcha: 'false',
         _autoresponse: 'Thank you for sponsoring a native Irish tree with The Original Dublin Christmas Trees.' + (ref ? ' Your reference is ' + ref + '.' : '') + ' We will be in touch soon to confirm the details. Go raibh maith agat!',
         reference: ref || '(none)', what: LABEL[d.what], name: d.name, email: d.email, celtic_tree: d.tree };
       body.certificate_name = d.cert_name; if (d.cert_from) body.certificate_from = d.cert_from; if (d.cert_message) body.certificate_message = d.cert_message;
       return timed(MAILER, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(body) }, 12000)
         .then(function (r) { return r.json(); })
-        .then(function (j) { if (j && (j.success === true || j.success === 'true' || /activation/i.test(String(j.message || '')))) return true; throw new Error('mail'); });
+        .then(function (j) { if (j && (j.success === true || j.success === 'true' || /activation/i.test(String(j.message || '')))) return true; why.mail = 'refused: ' + String(j && j.message || 'no answer').slice(0, 120); throw new Error('mail'); }, function (e) { if (why.mail === 'not tried') why.mail = 'blocked: ' + (e && e.name || 'error'); throw e; });
     }
     function received(ref) {
       btn.disabled = false; say('');
@@ -223,6 +227,7 @@
       btn.disabled = false; say('');
       var subj = 'Tree sponsorship 2026: ' + d.name;
       $('copytext').value = text;
+      $('tech').textContent = 'Technical: page ' + window.location.origin + ' | order list ' + why.list + ' | email ' + why.mail;
       $('gmail').href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(SHOP) + '&su=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
       $('mailto').href = 'mailto:' + SHOP + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
       done('One more step: send it to us', 'We could not send it from this page. Your sponsorship is written out below: send it with Gmail or your email app, or copy it and email it to ' + SHOP + '.', '', true);
@@ -230,7 +235,7 @@
 
     timed(ORDERS, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: d.name, email: d.email, interests: WANTS[d.what], tree: d.tree, area: '', cert_name: d.cert_name, cert_from: d.cert_from, cert_message: d.cert_message, consent: true }) }, 10000)
-      .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j || !j.ok || !j.ref) throw new Error('not saved'); return j.ref; }); })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j || !j.ok || !j.ref) { why.list = 'refused: ' + r.status + ' ' + (j && j.error || ''); throw new Error('not saved'); } return j.ref; }); }, function (e) { why.list = 'blocked: ' + (e && e.name || 'error') + ' (this web address may not be on the list)'; throw e; })
       .then(function (ref) { mail(ref).catch(function () { /* the order is saved and on the admin page; the email is only the alert */ }); received(ref); },
             function () { mail('').then(function () { received(''); }, manual); });
   });
