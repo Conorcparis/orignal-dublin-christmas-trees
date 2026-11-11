@@ -33,8 +33,6 @@
 #dct-sponsor .o-status{min-height:1.3em;font-size:14px;color:#9B1C1C;margin:0}
 #dct-sponsor .o-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 #dct-sponsor .o-hide{display:none!important}
-#dct-sponsor .o-astro{display:none}
-#dct-sponsor.is-astro .o-astro{display:grid}
 #dct-sponsor .o-tech{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--o-muted);margin:14px 0 0;overflow-wrap:anywhere}
 /* done */
 #dct-sponsor .o-done{text-align:center;padding:12px 0}
@@ -57,7 +55,6 @@
           <select id="dct-o-what" name="what" required>
             <option value="sponsor">Sponsor a tree (certificate for me or my family)</option>
             <option value="gift">A gift certificate for someone else</option>
-            <option value="astro">Celtic astrology certificate (your birth tree)</option>
           </select>
         </div>
 
@@ -84,11 +81,6 @@
               <option>Reed &middot; Ngetal (Compassion, truth and inquisitiveness)</option>
               <option>Elder &middot; Ruis (Adventurousness and thoughtfulness)</option>
           </select>
-        </div>
-
-        <div class="o-grid o-two o-astro">
-          <div class="o-f"><label for="dct-o-bday">Birth day</label><select id="dct-o-bday" name="born_day"><option value="">Day</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div>
-          <div class="o-f"><label for="dct-o-bmonth">Birth month</label><select id="dct-o-bmonth" name="born_month"><option value="">Month</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
         </div>
 
         <div class="o-cert" role="group" aria-labelledby="dct-o-cert-lbl">
@@ -126,7 +118,7 @@
 <script>
 // The Original Dublin Christmas Trees: SPONSOR BOX for the Webador Sponsor page (sponsor a native tree, or a gift certificate).
 // Paste the whole file into a Webador "Embed code" / HTML block. Nothing is loaded from GitHub and nothing links to it.
-// Christmas trees are sold in the Webador shop, so they are not in this box. The Celtic astrology box (celtic-astrology-webador.html) links here with ?tree=<name>.
+// Christmas trees are sold in the Webador shop and Celtic astrology certificates have their own box (astro-box-webador.html), so neither is in this box.
 // On "Send": 1) saved in the orders database (Cloudflare, Europe) -> reference R-XXXXXX, shown on the admin page;
 // 2) emailed to the shop mailbox through FormSubmit (private form code, not the address) with the reference,
 // and FormSubmit sends the customer an automatic confirmation;
@@ -138,28 +130,21 @@
   var SHOP = 'theoriginaldublinchristmastree@gmail.com';
   var root = document.getElementById('dct-sponsor'), $ = function (id) { return document.getElementById('dct-o-' + id); };
   var form = $('form'), what = $('what'), status = $('status'), btn = $('send');
-  var WANTS = { 'sponsor': ['Tree sponsorship'], 'gift': ['Gift certificate'], 'astro': ['Celtic astrology certificate'] };
-  var LABEL = { 'sponsor': 'Sponsorship certificate', 'gift': 'Gift certificate', 'astro': 'Celtic astrology certificate' };   // astrology certificates are a separate kind: marked as such in the email and the order list
+  var WANTS = { 'sponsor': ['Tree sponsorship'], 'gift': ['Gift certificate'] };
+  var LABEL = { 'sponsor': 'Sponsorship certificate', 'gift': 'Gift certificate' };   // Celtic astrology certificates have their own box (astro-box-webador.html)
 
   $('cname').required = true;
-  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  function bornText() { var dd = +$('bday').value, mm = +$('bmonth').value; return dd && mm ? dd + ' ' + MONTHS[mm - 1] : ''; }
-  function syncKind() { root.classList.toggle('is-astro', what.value === 'astro'); }
-  what.addEventListener('change', syncKind); syncKind();
 
   // A Celtic tree picked elsewhere (the tree list on this page, or ?tree=oak in the address): choose it here and make it a sponsorship.
-  function pickTree(name, scroll, born) {
-    var b = String(born || '').match(/^(\d{1,2})-(\d{1,2})$/);
-    if (b && +b[1] >= 1 && +b[1] <= 31 && +b[2] >= 1 && +b[2] <= 12) { $('bday').value = String(+b[1]); $('bmonth').value = String(+b[2]); }
+  function pickTree(name, scroll) {
     name = String(name || '').toLowerCase(); if (!/^[a-z]{2,10}$/.test(name)) return;
     var t = $('tree'), i;
     for (i = 0; i < t.options.length; i++) if (t.options[i].text.toLowerCase().indexOf(name + ' ') === 0) { t.selectedIndex = i; break; }
     if (i === t.options.length) return;
-    what.value = 'astro'; syncKind();   // a tree picked from the Celtic astrology page = an astrology certificate
     if (scroll) root.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-  document.addEventListener('dct-pick-tree', function (e) { var x = e.detail || {}; if (typeof x === 'string') pickTree(x, true); else pickTree(x.tree, true, x.born); });
-  try { var qs = new URLSearchParams(window.location.search), q = qs.get('tree'); if (q) pickTree(q, false, qs.get('born')); } catch (_) {}
+  document.addEventListener('dct-pick-tree', function (e) { var x = e.detail || {}; pickTree(typeof x === 'string' ? x : x.tree, true); });
+  try { var q = new URLSearchParams(window.location.search).get('tree'); if (q) pickTree(q, false); } catch (_) {}
 
   function say(t) { status.textContent = t || ''; }
   function timed(url, opts, ms) {
@@ -178,12 +163,10 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault(); say('');
     if (form.website.value) { done('Go raibh maith agat!', 'Thank you.', '', false); return; }   // hidden field filled in: a bot
-    var d = { what: what.value, name: $('name').value.trim(), email: $('email').value.trim(), tree: ($('tree').value || 'Not sure: choose for me') + (what.value === 'astro' && bornText() ? ' \u00b7 born ' + bornText() : ''),
+    var d = { what: what.value, name: $('name').value.trim(), email: $('email').value.trim(), tree: ($('tree').value || 'Not sure: choose for me'),
       cert_name: $('cname').value.trim(), cert_from: $('cfrom').value.trim(), cert_message: $('cmsg').value.trim() };
     if (!d.name) { say('Please type your name.'); $('name').focus(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) { say('Please check your email address.'); $('email').focus(); return; }
-    if (d.what === 'astro' && !bornText()) { say('Please choose the birth day and month for the astrology certificate.'); $('bday').focus(); return; }
-    if (d.what === 'astro' && !$('tree').value) { say('Please choose the Celtic tree for the astrology certificate.'); $('tree').focus(); return; }
     if (!d.cert_name) { say('Please type the name for the certificate.'); $('cname').focus(); return; }
     if (!$('consent').checked) { say('Please tick the box to agree we can contact you about your sponsorship.'); $('consent').focus(); return; }
     var text = LABEL[d.what].toUpperCase() + ': order from the website\n\nWhat: ' + LABEL[d.what] + '\nName: ' + d.name + '\nEmail: ' + d.email + '\nCeltic tree: ' + d.tree +
@@ -195,7 +178,7 @@
     function mail(ref) {
       why.mail = 'not tried';
       var body = { _subject: LABEL[d.what] + ' 2026: ' + d.name + (ref ? ' (' + ref + ')' : ' (NOT in the order list: add it from this email)'), _template: 'table', _captcha: 'false',
-        _autoresponse: 'Thank you for your ' + (d.what === 'astro' ? 'Celtic astrology certificate' : d.what === 'gift' ? 'gift certificate' : 'tree sponsorship') + ' with The Original Dublin Christmas Trees.' + (ref ? ' Your reference is ' + ref + '.' : '') + ' We will be in touch soon to confirm the details. Go raibh maith agat!',
+        _autoresponse: 'Thank you for your ' + (d.what === 'gift' ? 'gift certificate' : 'tree sponsorship') + ' with The Original Dublin Christmas Trees.' + (ref ? ' Your reference is ' + ref + '.' : '') + ' We will be in touch soon to confirm the details. Go raibh maith agat!',
         reference: ref || '(none)', certificate_type: LABEL[d.what], name: d.name, email: d.email, celtic_tree: d.tree };
       body.certificate_name = d.cert_name; if (d.cert_from) body.certificate_from = d.cert_from; if (d.cert_message) body.certificate_message = d.cert_message;
       return timed(MAILER, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(body) }, 45000)

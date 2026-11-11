@@ -1,0 +1,211 @@
+<div id="dct-astro">
+<style>
+#dct-astro{--c-ink:#002244;--c-blue:#004B87;--c-green:#1C3A2C;--c-gold:#B08D3C;--c-text:#2B3440;--c-muted:#5B6673;--c-line:rgba(0,34,68,.16);--c-bg:#FBF8F1;--c-field:#F3F6F9;
+  background:var(--c-bg);color:var(--c-text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:16px;line-height:1.55;padding:40px 16px;box-sizing:border-box;width:100%}
+#dct-astro *,#dct-astro *::before,#dct-astro *::after{box-sizing:border-box}
+#dct-astro .c-wrap{max-width:720px;margin:0 auto}
+#dct-astro .c-card{background:#fff;border:1px solid var(--c-line);border-radius:14px;padding:24px;box-shadow:0 10px 30px -20px rgba(0,34,68,.45)}
+@media (min-width:600px){#dct-astro .c-card{padding:32px}}
+#dct-astro h2{font-family:Georgia,'Times New Roman',serif;color:var(--c-ink);font-weight:600;margin:0 0 6px;line-height:1.2;font-size:clamp(24px,3.4vw,32px)}
+#dct-astro p{margin:0 0 14px}
+#dct-astro .c-sub{color:var(--c-muted);font-size:15px;margin-bottom:22px}
+#dct-astro .c-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:600px){#dct-astro .c-two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+#dct-astro .c-f{display:flex;flex-direction:column;gap:6px;min-width:0}
+#dct-astro label,#dct-astro .c-lbl{font:700 12px/1.3 ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--c-ink)}
+#dct-astro .c-opt{font-weight:400;text-transform:none;letter-spacing:0;color:var(--c-muted)}
+#dct-astro input[type=text],#dct-astro input[type=email],#dct-astro select,#dct-astro textarea{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--c-line);border-radius:8px;background:var(--c-field);color:var(--c-text);font:inherit;font-size:16px;margin:0}
+#dct-astro textarea{min-height:76px;resize:vertical}
+#dct-astro select{appearance:auto;cursor:pointer}
+#dct-astro input:focus,#dct-astro select:focus,#dct-astro textarea:focus{outline:3px solid var(--c-gold);outline-offset:1px;background:#fff}
+#dct-astro .c-tree{padding:14px 16px;border-radius:10px;background:#EEF4EF;border:1px solid rgba(28,58,44,.18);color:var(--c-ink);font-size:16px;margin:0}
+#dct-astro .c-tree strong{font-family:Georgia,serif;font-size:19px}
+#dct-astro .c-cert{display:grid;gap:16px;padding:18px;border-radius:10px;background:#F7F4EA;border:1px solid rgba(176,141,60,.3)}
+#dct-astro .c-consent{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--c-muted)}
+#dct-astro .c-consent input{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--c-ink)}
+#dct-astro details{font-size:14px;color:var(--c-muted)}
+#dct-astro summary{cursor:pointer;color:var(--c-ink);text-decoration:underline}
+#dct-astro details p{margin:8px 0 0}
+#dct-astro .c-btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;padding:14px 20px;border:0;border-radius:999px;background:var(--c-ink);color:#fff;font-family:inherit;font-weight:700;font-size:16px;line-height:1.2;cursor:pointer;margin-top:4px}
+#dct-astro .c-btn:hover{background:var(--c-blue)}
+#dct-astro .c-btn:disabled{opacity:.6;cursor:wait}
+#dct-astro .c-btn:focus-visible{outline:3px solid var(--c-gold);outline-offset:3px}
+#dct-astro .c-status{min-height:1.3em;font-size:14px;color:#9B1C1C;margin:0}
+#dct-astro .c-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+#dct-astro .c-hide{display:none!important}
+#dct-astro .c-tech{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--c-muted);margin:14px 0 0;overflow-wrap:anywhere}
+#dct-astro .c-done{text-align:center;padding:12px 0}
+#dct-astro .c-ref{display:inline-block;font:700 20px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;color:var(--c-ink);background:#EEF4EF;border-radius:8px;padding:8px 14px;margin:6px 0 14px}
+#dct-astro .c-copy{width:100%;min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;margin:10px 0}
+#dct-astro .c-links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+#dct-astro .c-links a,#dct-astro .c-links button{display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;border-radius:999px;border:1px solid var(--c-ink);color:var(--c-ink);background:#fff;text-decoration:none;font-family:inherit;font-weight:600;font-size:14px;line-height:1.2;cursor:pointer}
+</style>
+
+<div class="c-wrap">
+  <div class="c-card">
+    <div id="dct-c-form-box">
+      <h2>Order your Celtic astrology certificate</h2>
+      <p class="c-sub">Choose the birth date: we find the Celtic birth tree and print it on the certificate, with its Ogham sign and meaning. You get a reference number straight away and an email to confirm.</p>
+      <form id="dct-c-form" class="c-grid" novalidate>
+        <div class="c-hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+        <div class="c-grid c-two">
+          <div class="c-f"><label for="dct-c-bday">Birth day</label><select id="dct-c-bday" name="born_day"><option value="">Day</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div>
+          <div class="c-f"><label for="dct-c-bmonth">Birth month</label><select id="dct-c-bmonth" name="born_month"><option value="">Month</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
+        </div>
+        <p class="c-tree" id="dct-c-tree" aria-live="polite">Choose the birth day and month to see the Celtic birth tree.</p>
+
+        <div class="c-grid c-two">
+          <div class="c-f"><label for="dct-c-name">Your name</label><input id="dct-c-name" name="name" type="text" autocomplete="name" maxlength="80" required></div>
+          <div class="c-f"><label for="dct-c-email">Your email</label><input id="dct-c-email" name="email" type="email" autocomplete="email" maxlength="120" required></div>
+        </div>
+
+        <div class="c-cert" role="group" aria-labelledby="dct-c-cert-lbl">
+          <span class="c-lbl" id="dct-c-cert-lbl">For the certificate</span>
+          <div class="c-grid c-two">
+            <div class="c-f"><label for="dct-c-cname">Name on the certificate</label><input id="dct-c-cname" name="cert_name" type="text" maxlength="60" autocomplete="off" placeholder="Whose birth tree it is" required></div>
+            <div class="c-f"><label for="dct-c-cfrom">From <span class="c-opt">(optional)</span></label><input id="dct-c-cfrom" name="cert_from" type="text" maxlength="60" autocomplete="off" placeholder="Your name, as the giver"></div>
+          </div>
+          <div class="c-f"><label for="dct-c-cmsg">Message <span class="c-opt">(optional)</span></label><textarea id="dct-c-cmsg" name="cert_message" maxlength="160" rows="2" placeholder="A short message to print on it"></textarea></div>
+        </div>
+
+        <div class="c-consent"><input id="dct-c-consent" name="consent" type="checkbox" required><label for="dct-c-consent" style="font:inherit;text-transform:none;letter-spacing:0;color:inherit">I agree to be contacted about my astrology certificate.</label></div>
+        <details><summary>How we use your details</summary>
+          <p>Only what you type here: to reply, confirm your order and send your certificate. It is saved in our order list (Cloudflare, stored in Europe), which only we can open, and a copy is emailed to us through FormSubmit, which also sends you a confirmation. No cookies or trackers. To see, correct or delete your details, email theoriginaldublinchristmastree@gmail.com. You can also complain to the Data Protection Commission (dataprotection.ie).</p>
+        </details>
+        <p class="c-status" id="dct-c-status" role="status" aria-live="polite"></p>
+        <button class="c-btn" type="submit" id="dct-c-send">Order my astrology certificate</button>
+      </form>
+    </div>
+
+    <div id="dct-c-done" class="c-done c-hide" tabindex="-1">
+      <h2 id="dct-c-done-title">Go raibh maith agat!</h2>
+      <p id="dct-c-done-text"></p>
+      <div id="dct-c-done-ref" class="c-ref c-hide"></div>
+      <div id="dct-c-manual" class="c-hide">
+        <textarea class="c-copy" id="dct-c-copytext" readonly aria-label="Your order"></textarea>
+        <p class="c-tech" id="dct-c-tech"></p>
+        <div class="c-links"><button type="button" id="dct-c-copy">Copy the text</button><a id="dct-c-gmail" target="_blank" rel="noopener" href="#">Open in Gmail</a><a id="dct-c-mailto" href="#">Email app</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// The Original Dublin Christmas Trees: ASTROLOGY ORDER BOX for the Webador Celtic Tree Astrology page (Celtic astrology certificates only).
+// Paste the whole file into a Webador "Embed code" / HTML block, under the Celtic tree information. Nothing is loaded from GitHub and nothing links to it.
+// The birth date decides the tree (the 13-tree calendar, Elder to 23 Dec). Clicks on the tree list above (#celtic-astrology .a-row) stay on the page and scroll here.
+// On "Send": saved in the orders database as 'Celtic astrology certificate' (reference R-XXXXXX), emailed to the shop through FormSubmit with an automatic
+// confirmation to the customer; if the database cannot be reached the email still goes; if both fail the customer gets the text to email themselves.
+(function () {
+  var ORDERS = 'https://dublin-trees-orders.conor-0a0.workers.dev/api/reservations';
+  var MAILER = 'https://formsubmit.co/ajax/03c4ec96febca3411138c6b7ab8ba85a';   // the shop mailbox's private FormSubmit code
+  var SHOP = 'theoriginaldublinchristmastree@gmail.com';
+  var root = document.getElementById('dct-astro'), $ = function (id) { return document.getElementById('dct-c-' + id); };
+  var form = $('form'), status = $('status'), btn = $('send');
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var LAST = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  // [first day as month*100+day, name, Irish, meaning]; Birch runs 24 Dec to 20 Jan, so it wraps over the new year.
+  var TREES = [[1224, 'Birch', 'Beith', 'Renewal, purification and new beginnings'], [121, 'Rowan', 'Luis', 'Vision, intuition and inspiration'],
+    [218, 'Ash', 'Nion', 'Connection, balance and inner depth'], [318, 'Alder', 'Fearn', 'Momentum, strength and adaptability'],
+    [415, 'Willow', 'Saille', 'Calm, intuition and observation'], [513, 'Hawthorn', 'Huath', 'Secretive, passionate and illusionary'],
+    [610, 'Oak', 'Duir', 'Loyalty, generosity and stability'], [708, 'Holly', 'Tinne', 'Confidence, nobility and leadership'],
+    [805, 'Hazel', 'Coll', 'Intelligence, reserve and inner knowledge'], [902, 'Vine', 'Muin', 'Charm, elegance and equality'],
+    [930, 'Ivy', 'Gort', 'Bravery, determination and survival'], [1028, 'Reed', 'Ngetal', 'Compassion, truth and inquisitiveness'],
+    [1125, 'Elder', 'Ruis', 'Adventurousness and thoughtfulness']];
+  function birth() {
+    var d = +$('bday').value, m = +$('bmonth').value;
+    if (!d || !m) return null;
+    if (d > LAST[m - 1]) return { bad: 'That month has only ' + LAST[m - 1] + ' days.' };
+    var md = m * 100 + d, hit = 0;
+    for (var i = 1; i < TREES.length; i++) if (md >= TREES[i][0] && md < 1224) hit = i;
+    if (md >= 1224 || md < 121) hit = 0;
+    return { text: d + ' ' + MONTHS[m - 1], tree: TREES[hit] };
+  }
+  function showTree() {
+    var b = birth(), box = $('tree');
+    if (!b) { box.textContent = 'Choose the birth day and month to see the Celtic birth tree.'; return; }
+    if (b.bad) { box.textContent = b.bad; return; }
+    box.textContent = '';
+    var s = document.createElement('strong'); s.textContent = b.tree[1] + ' (' + b.tree[2] + ')';
+    box.appendChild(document.createTextNode('Celtic birth tree: ')); box.appendChild(s); box.appendChild(document.createTextNode(': ' + b.tree[3].toLowerCase() + '.'));
+  }
+  $('bday').addEventListener('change', showTree); $('bmonth').addEventListener('change', showTree);
+
+  // The tree list above this box (the Celtic information block): a click stays on this page and brings the visitor here.
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('#celtic-astrology .a-row') : null; if (!a) return;
+    e.preventDefault(); root.scrollIntoView({ behavior: 'smooth', block: 'start' }); $('bday').focus({ preventScroll: true });
+  }, true);
+
+  function say(t) { status.textContent = t || ''; }
+  function timed(url, opts, ms) {
+    var c = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (c) c.abort(); }, ms);
+    if (c) opts.signal = c.signal;
+    return fetch(url, opts).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw e; });
+  }
+  function done(title, text, ref, manual) {
+    $('form-box').classList.add('c-hide'); $('done').classList.remove('c-hide');
+    $('done-title').textContent = title; $('done-text').textContent = text;
+    $('done-ref').textContent = ref || ''; $('done-ref').classList.toggle('c-hide', !ref);
+    $('manual').classList.toggle('c-hide', !manual);
+    $('done').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('done').focus({ preventScroll: true });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault(); say('');
+    if (form.website.value) { done('Go raibh maith agat!', 'Thank you.', '', false); return; }   // hidden field filled in: a bot
+    var b = birth();
+    if (!b) { say('Please choose the birth day and month.'); $('bday').focus(); return; }
+    if (b.bad) { say(b.bad); $('bday').focus(); return; }
+    var d = { name: $('name').value.trim(), email: $('email').value.trim(), cert_name: $('cname').value.trim(), cert_from: $('cfrom').value.trim(), cert_message: $('cmsg').value.trim(),
+      tree: b.tree[1] + ' \u00b7 ' + b.tree[2] + ' (' + b.tree[3] + ') \u00b7 born ' + b.text, born: b.text };
+    if (!d.name) { say('Please type your name.'); $('name').focus(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) { say('Please check your email address.'); $('email').focus(); return; }
+    if (!d.cert_name) { say('Please type the name for the certificate.'); $('cname').focus(); return; }
+    if (!$('consent').checked) { say('Please tick the box to agree we can contact you about your certificate.'); $('consent').focus(); return; }
+    var text = 'CELTIC ASTROLOGY CERTIFICATE: order from the website\n\nName: ' + d.name + '\nEmail: ' + d.email + '\nBorn: ' + d.born + '\nCeltic birth tree: ' + d.tree +
+      '\n\nCertificate\nName on it: ' + d.cert_name + (d.cert_from ? '\nFrom: ' + d.cert_from : '') + (d.cert_message ? '\nMessage: ' + d.cert_message : '') +
+      '\n\nThe customer agreed to be contacted about the certificate.';
+    btn.disabled = true; say('Sending... this can take up to half a minute.');
+    var why = { list: 'not tried', mail: 'not tried' };   // shown in small print on the fallback screen, so the owner can send it to us
+
+    function mail(ref) {
+      why.mail = 'not tried';
+      var body = { _subject: 'Celtic astrology certificate 2026: ' + d.name + (ref ? ' (' + ref + ')' : ' (NOT in the order list: add it from this email)'), _template: 'table', _captcha: 'false',
+        _autoresponse: 'Thank you for your Celtic astrology certificate order with The Original Dublin Christmas Trees.' + (ref ? ' Your reference is ' + ref + '.' : '') + ' We will be in touch soon to confirm the details. Go raibh maith agat!',
+        reference: ref || '(none)', certificate_type: 'Celtic astrology certificate', name: d.name, email: d.email, born: d.born, celtic_tree: d.tree, certificate_name: d.cert_name };
+      if (d.cert_from) body.certificate_from = d.cert_from; if (d.cert_message) body.certificate_message = d.cert_message;
+      return timed(MAILER, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(body) }, 45000)
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j && (j.success === true || j.success === 'true' || /activation/i.test(String(j.message || '')))) return true; why.mail = 'refused: ' + String(j && j.message || 'no answer').slice(0, 120); throw new Error('mail'); }, function (e) { if (why.mail === 'not tried') why.mail = 'blocked: ' + (e && e.name || 'error'); throw e; });
+    }
+    function received(ref) {
+      btn.disabled = false; say('');
+      done('Go raibh maith agat!', 'Your astrology certificate order has been received.' + (ref ? ' Your reference is below; keep it.' : '') + ' We will email you at ' + d.email + ' to confirm.', ref, false);
+    }
+    function manual() {
+      btn.disabled = false; say('');
+      var subj = 'Celtic astrology certificate 2026: ' + d.name;
+      $('copytext').value = text;
+      $('tech').textContent = 'Technical: page ' + window.location.origin + ' | order list ' + why.list + ' | email ' + why.mail;
+      $('gmail').href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(SHOP) + '&su=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
+      $('mailto').href = 'mailto:' + SHOP + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
+      done('One more step: send it to us', 'We could not send it from this page. Your order is written out below: send it with Gmail or your email app, or copy it and email it to ' + SHOP + '.', '', true);
+    }
+
+    timed(ORDERS, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: d.name, email: d.email, interests: ['Celtic astrology certificate'], tree: d.tree, area: '', cert_name: d.cert_name, cert_from: d.cert_from, cert_message: d.cert_message, consent: true }) }, 10000)
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j || !j.ok || !j.ref) { why.list = 'refused: ' + r.status + ' ' + (j && j.error || ''); throw new Error('not saved'); } return j.ref; }); }, function (e) { why.list = 'blocked: ' + (e && e.name || 'error') + ' (this web address may not be on the list)'; throw e; })
+      .then(function (ref) { mail(ref).catch(function () { /* the order is saved and on the admin page; the email is only the alert */ }); received(ref); },
+            function () { mail('').then(function () { received(''); }, manual); });
+  });
+
+  $('copy').addEventListener('click', function () {
+    var x = $('copytext'); x.focus(); x.select(); var ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) {}
+    this.textContent = ok ? 'Copied' : 'Press Ctrl+C';
+  });
+})();
+</script>
+</div>
