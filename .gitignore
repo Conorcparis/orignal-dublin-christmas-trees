@@ -7,3 +7,5 @@ worker/.dev.vars
 .dev.vars
 .wrangler/
 *.tmp
+worker/.ronan-key.txt
+backups/

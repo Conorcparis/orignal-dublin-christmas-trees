@@ -221,3 +221,25 @@ test('a gift card order carries its amount; a certificate ignores it', async () 
   const bad = await (await admin(env, '/api/admin/import', { method: 'POST', body: { text: mail('Gift card', 'lots') } })).json();
   assert.doesNotMatch(bad.reservation.notes, /Amount/, 'a non-number is left out');
 });
+
+test('payment received: 15 euro per certificate, marked and undone by the owner, in the list and the CSV', async () => {
+  const env = mkEnv();
+  const one = await (await post(env, { ...GOOD, interests: ['Celtic astrology certificate'], cert_name: 'Mam' })).json();
+  const two = await (await post(env, { ...GOOD, email: 'b@example.ie', interests: ['Christmas tree'] }, { 'CF-Connecting-IP': '2.2.2.2' })).json();
+  let list = (await (await admin(env, '/api/admin/reservations')).json());
+  const byRef = (l, ref) => l.reservations.find((r) => r.ref === ref);
+  assert.equal(list.price_eur, 15);
+  assert.equal(byRef(list, one.ref).due_eur, 15, 'a certificate costs 15');
+  assert.equal(byRef(list, two.ref).due_eur, 0, 'a Christmas tree alone has no certificate price');
+  assert.equal(byRef(list, one.ref).paid_eur, 0);
+  assert.equal((await admin(env, '/api/admin/reservations/' + one.ref, { method: 'PATCH', body: { paid: true } })).status, 200);
+  list = await (await admin(env, '/api/admin/reservations')).json();
+  assert.equal(byRef(list, one.ref).paid_eur, 15); assert.ok(byRef(list, one.ref).paid_at);
+  assert.equal((await admin(env, '/api/admin/reservations/' + one.ref, { method: 'PATCH', body: { paid: true, paid_eur: 'x' } })).status, 400);
+  assert.equal((await admin(env, '/api/admin/reservations/' + one.ref, { method: 'PATCH', body: { paid: false } })).status, 200);
+  list = await (await admin(env, '/api/admin/reservations')).json();
+  assert.equal(byRef(list, one.ref).paid_eur, 0); assert.equal(byRef(list, one.ref).paid_at, '');
+  assert.equal((await admin(env, '/api/admin/reservations/R-NOPE00', { method: 'PATCH', body: { paid: true } })).status, 404);
+  const csv = await (await admin(env, '/api/admin/export.csv')).text();
+  assert.ok(csv.split('\r\n')[0].endsWith('due_eur,paid_eur,paid_at'));
+});

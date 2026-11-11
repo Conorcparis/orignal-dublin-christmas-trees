@@ -3,7 +3,7 @@
  *
  *   POST   /api/reservations            public, from the website only: validates and stores a reservation, returns its reference
  *   GET    /api/admin/reservations      owner: list (?status=&q=), newest 500
- *   PATCH  /api/admin/reservations/:ref owner: change status or notes
+ *   PATCH  /api/admin/reservations/:ref owner: change status or notes, or mark the payment received ({ paid: true | false, paid_eur? })
  *   DELETE /api/admin/reservations/:ref owner: erase one reservation (data-protection requests)
  *   POST   /api/admin/import            owner: paste an order email, it becomes an order with a unique certificate code
  *   GET    /api/admin/export.csv        owner: everything as CSV
@@ -16,6 +16,10 @@ const ALLOWED_ORIGINS = ['https://conorcparis.github.io', 'https://temp-llxnuoad
 // localhost is added by the ALLOW_LOCAL variable for local testing only
 const INTERESTS = ['Christmas tree', 'Tree sponsorship', 'Gift certificate', 'Celtic astrology certificate'];   // astrology (birth-tree) certificates are a separate kind from sponsorship ones
 const STATUSES = ['new', 'confirmed', 'paid', 'done', 'cancelled'];
+// Payment: 15 euro per certificate (sponsorship, gift or Celtic astrology). A Christmas tree on its own has no certificate price here.
+const PRICE_EUR = 15, CERT_KINDS = ['Tree sponsorship', 'Gift certificate', 'Celtic astrology certificate'];
+const dueEur = (interests) => PRICE_EUR * CERT_KINDS.filter((k) => String(interests || '').includes(k)).length;
+const withDue = (r) => ({ ...r, due_eur: dueEur(r.interests) });
 const REF_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';                   // no 0, O, 1, I, L: references are read out and typed
 const MAX_BODY = 8192;
 const LIMITS = { name: 80, email: 120, tree: 90, area: 40, cert_name: 60, cert_from: 60, cert_message: 160, notes: 1000 };
@@ -199,8 +203,8 @@ async function handleAdmin(request, env, url, cors) {
     const where = [], args = [];
     if (STATUSES.includes(status)) { where.push('status = ?'); args.push(status); }
     if (q) { where.push('(lower(name) LIKE ? OR lower(email) LIKE ? OR lower(ref) LIKE ? OR lower(cert_name) LIKE ?)'); const like = '%' + q.replace(/[%_]/g, '') + '%'; args.push(like, like, like, like); }
-    const rows = await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes FROM reservations' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY created_at DESC LIMIT 500').bind(...args).all();
-    return json({ ok: true, reservations: rows.results || [] }, 200, nostore);
+    const rows = await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes, paid_eur, paid_at FROM reservations' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY created_at DESC LIMIT 500').bind(...args).all();
+    return json({ ok: true, price_eur: PRICE_EUR, reservations: (rows.results || []).map(withDue) }, 200, nostore);
   }
   if (path === '/api/admin/import' && request.method === 'POST') {
     // Paste in an order email: it becomes an order with its own unique certificate code (the reference).
@@ -223,8 +227,8 @@ async function handleAdmin(request, env, url, cors) {
     return json({ ok: false, error: 'server' }, 500, nostore);
   }
   if (path === '/api/admin/export.csv' && request.method === 'GET') {
-    const rows = (await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes FROM reservations ORDER BY created_at DESC').all()).results || [];
-    const head = ['ref', 'created_at', 'name', 'email', 'interests', 'tree', 'area', 'cert_name', 'cert_from', 'cert_message', 'status', 'notes'];
+    const rows = ((await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes, paid_eur, paid_at FROM reservations ORDER BY created_at DESC').all()).results || []).map(withDue);
+    const head = ['ref', 'created_at', 'name', 'email', 'interests', 'tree', 'area', 'cert_name', 'cert_from', 'cert_message', 'status', 'notes', 'due_eur', 'paid_eur', 'paid_at'];
     const csv = [head.join(','), ...rows.map((r) => head.map((k) => csvCell(r[k])).join(','))].join('\r\n') + '\r\n';
     return new Response(csv, { status: 200, headers: { ...nostore, 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="reservations.csv"', 'X-Content-Type-Options': 'nosniff' } });
   }
@@ -233,6 +237,15 @@ async function handleAdmin(request, env, url, cors) {
     const sets = [], args = [];
     if (b && b.status !== undefined) { if (!STATUSES.includes(b.status)) return json({ ok: false, error: 'bad_status' }, 400, nostore); sets.push('status = ?'); args.push(b.status); }
     if (b && b.notes !== undefined) { sets.push('notes = ?'); args.push(cleanMultiline(b.notes, LIMITS.notes)); }
+    if (b && b.paid !== undefined) {
+      // paid: true marks the payment received (the amount given, or 15 per certificate on the order); paid: false undoes it
+      let amount = 0;
+      if (b.paid === true) {
+        if (b.paid_eur !== undefined) { amount = Number(b.paid_eur); if (!Number.isInteger(amount) || amount < 1 || amount > 10000) return json({ ok: false, error: 'bad_amount' }, 400, nostore); }
+        else { const row = await env.DB.prepare('SELECT interests FROM reservations WHERE ref = ?').bind(m[1]).first(); if (!row) return json({ ok: false, error: 'not_found' }, 404, nostore); amount = dueEur(row.interests) || PRICE_EUR; }
+      } else if (b.paid !== false) return json({ ok: false, error: 'bad_paid' }, 400, nostore);
+      sets.push('paid_eur = ?', 'paid_at = ?'); args.push(amount, amount ? new Date().toISOString() : '');
+    }
     if (!sets.length) return json({ ok: false, error: 'nothing_to_change' }, 400, nostore);
     const r = await env.DB.prepare('UPDATE reservations SET ' + sets.join(', ') + ' WHERE ref = ?').bind(...args, m[1]).run();
     return (r.meta && r.meta.changes === 0) ? json({ ok: false, error: 'not_found' }, 404, nostore) : json({ ok: true }, 200, nostore);

@@ -76,6 +76,26 @@
       buttons.push(el('a', { class: 'px-3 py-2 rounded bg-primary-container text-on-primary font-button-text text-button-text hover:bg-primary', href: certLink(r, 'gift'), text: 'Gift card' }));
     }
     buttons.push(emailButton(r.email, r.name, r.ref, r.cert_name));
+    // Payment received: 15 euro per certificate. One click marks it received (with today's date); Undo clears it.
+    var due = +r.due_eur || 0, paid = +r.paid_eur || 0, payBox = null;
+    if (due || paid) {
+      var payText = el('span', { class: 'font-body-sm text-body-sm font-semibold ' + (paid ? 'text-secondary' : 'text-error') });
+      var payBtn = el('button', { type: 'button', class: 'px-3 py-2 rounded font-button-text text-button-text ' + (paid ? 'bg-surface-container text-primary hover:bg-surface-container-high' : 'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed') });
+      var drawPay = function () {
+        payText.textContent = paid ? 'Payment received: \u20AC' + paid + (r.paid_at ? ' on ' + fmt(r.paid_at) : '') : 'Payment due: \u20AC' + due + ' (not received yet)';
+        payBtn.textContent = paid ? 'Undo payment' : 'Mark \u20AC' + due + ' received';
+        payText.className = 'font-body-sm text-body-sm font-semibold ' + (paid ? 'text-secondary' : 'text-error');
+      };
+      payBtn.addEventListener('click', function () {
+        var want = !paid; state.textContent = 'Saving\u2026';
+        api('/api/admin/reservations/' + encodeURIComponent(r.ref), { method: 'PATCH', body: { paid: want } }).then(function (res) {
+          if (!res.ok) { state.textContent = fail(res); return; }
+          state.textContent = 'Saved'; paid = want ? due || 15 : 0; r.paid_eur = paid; r.paid_at = want ? new Date().toISOString() : ''; drawPay(); totals();
+        }, function () { state.textContent = 'Could not save'; });
+      });
+      drawPay();
+      payBox = el('div', { class: 'flex flex-wrap items-center gap-3 p-3 rounded bg-surface-container-low' }, [el('span', { class: 'font-label-mono-xs text-label-mono-xs text-on-surface-variant uppercase', text: 'Payment' }), payText, payBtn]);
+    }
     var mail = el('a', { class: 'underline text-primary', href: 'mailto:' + encodeURIComponent(r.email).replace('%40', '@'), text: r.email });
     return el('li', { class: 'bg-surface-container-lowest rounded-lg shadow-sm p-5 flex flex-col gap-2' }, [
       el('div', { class: 'flex flex-wrap items-center justify-between gap-2' }, [
@@ -85,8 +105,16 @@
       el('p', { class: 'font-body-sm text-body-sm' }, [mail]),
       line('Interested in', r.interests), line('Tree', r.tree), line('Area', r.area),
       r.cert_name ? line('Certificate for', r.cert_name + (r.cert_from ? ', from ' + r.cert_from : '')) : null, line('Message', r.cert_message),
-      notes,
+      payBox, notes,
       el('div', { class: 'flex flex-wrap items-center gap-2' }, buttons.concat([saveNotes, del]))]);
+  }
+
+  // Money: received and still due (15 euro per certificate), for the orders shown.
+  function totals() {
+    var box = $('#money'); if (!box) { box = el('p', { id: 'money', class: 'font-body-md text-body-md font-semibold text-primary' }); $('#summary').insertAdjacentElement('afterend', box); }
+    var got = 0, owed = 0, open = 0;
+    all.forEach(function (x) { if (x.status === 'cancelled') return; var due = +x.due_eur || 0, paid = +x.paid_eur || 0; got += paid; if (due && !paid) { owed += due; open++; } });
+    box.textContent = all.length ? 'Payments received: \u20AC' + got + ' \u00b7 still due: \u20AC' + owed + ' (' + open + ' order' + (open === 1 ? '' : 's') + ')' : '';
   }
 
   function load() {
@@ -98,7 +126,7 @@
         $('#msg').textContent = '';
         var list = $('#list'); list.textContent = '';
         j.reservations.forEach(function (x) { list.appendChild(card(x)); });
-        all = j.reservations; renderCustomers();
+        all = j.reservations; renderCustomers(); totals();
         var count = function (s) { return j.reservations.filter(function (x) { return x.status === s; }).length; };
         $('#summary').textContent = j.reservations.length ? j.reservations.length + ' shown: ' + count('new') + ' new, ' + count('confirmed') + ' confirmed, ' + count('paid') + ' paid, ' + count('done') + ' done, ' + count('cancelled') + ' cancelled.' : 'No reservations yet.';
       });
