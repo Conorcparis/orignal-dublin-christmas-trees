@@ -75,7 +75,7 @@
       buttons.push(el('a', { class: 'px-3 py-2 rounded bg-tertiary-container text-on-tertiary font-button-text text-button-text hover:bg-tertiary', href: certLink(r, /astrology/i.test(r.interests || '') ? 'astro' : 'cert'), text: /astrology/i.test(r.interests || '') ? 'Astrology certificate' : 'Certificate' }));
       buttons.push(el('a', { class: 'px-3 py-2 rounded bg-primary-container text-on-primary font-button-text text-button-text hover:bg-primary', href: certLink(r, 'gift'), text: 'Gift card' }));
     }
-    buttons.push(emailButton(r.email, r.name, r.ref, r.cert_name));
+    buttons.push(copyButton(r)); buttons.push(emailButton(r.email, r.name, r.ref, r.cert_name, r));
     // Payment received: 15 euro per certificate. One click marks it received (with today's date); Undo clears it.
     var due = +r.due_eur || 0, paid = +r.paid_eur || 0, payBox = null;
     if (due || paid) {
@@ -135,17 +135,36 @@
 
 
   // ---- Customers: one row per email address, sortable; Email opens a ready-written message in the owner's own Gmail or mail app ----
-  function mailText(name, ref, certName) {
-    var first = (name || '').split(' ')[0] || 'there';
-    return {
-      subject: 'Your Original Dublin Christmas Trees certificate' + (ref ? ' (' + ref + ')' : ''),
-      body: 'Hi ' + first + ',\n\nThank you for your order. Your certificate' + (certName ? ' for ' + certName : '') + ' is attached.' + (ref ? '\nIts certificate code is ' + ref + '.' : '') + '\n\nHappy Christmas,\nThe Original Dublin Christmas Trees'
-    };
+  // The email Ronan sends with the certificate attached (payment received). r = the order; the wording follows the kind of certificate.
+  function mailText(name, ref, certName, r) {
+    r = r || {};
+    var first = (name || '').split(' ')[0] || 'there', interests = r.interests || '', tree = (r.tree || '').split(' (')[0];
+    var kind = /astrology/i.test(interests) ? 'astro' : /gift/i.test(interests) ? 'gift' : 'sponsor';
+    var what = { astro: 'Celtic astrology certificate', gift: 'gift certificate', sponsor: 'tree sponsorship certificate' }[kind];
+    var paid = +r.paid_eur || 0;
+    var lines = ['Hi ' + first + ',', '',
+      (paid ? 'Thank you, we have received your payment of \u20AC' + paid + '. ' : 'Thank you for your order. ') + 'Your ' + what + (certName ? ' for ' + certName : '') + ' is attached.'];
+    if (kind === 'astro') lines.push('', 'It shows the Celtic birth tree' + (tree ? ', ' + tree : '') + ', with its Ogham sign and meaning. Its symbolic tree stands in our Circle of Life, the Celtic tree astrology circle in the Wicklow Mountains.');
+    else lines.push('', 'A native Irish tree' + (tree && !/not sure/i.test(tree) ? ' (' + tree + ')' : '') + ' is planted in your name in our woodland in the Wicklow Mountains, and cared for as part of our native woodland restoration.');
+    if (ref) lines.push('', 'Your certificate number is ' + ref + '. Keep it: it is how we find your tree.');
+    lines.push('', 'Print it on A4 or keep it as a PDF. If anything on it needs changing, just reply to this email.', '', 'Happy Christmas,', 'Ronan', 'The Original Dublin Christmas Trees', 'theoriginaldublinchristmastree@gmail.com');
+    return { subject: 'Your ' + what + ' from The Original Dublin Christmas Trees' + (ref ? ' (' + ref + ')' : ''), body: lines.join('\n') };
   }
-  function emailButton(to, name, ref, certName) {
-    var t = mailText(name, ref, certName);
+  // "Copy email": puts the subject and the text on the clipboard, ready to paste into any mail program with the certificate attached.
+  function copyButton(r) {
+    var b = el('button', { type: 'button', class: 'px-3 py-2 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high', text: 'Copy email' });
+    b.addEventListener('click', function () {
+      var m = mailText(r.name, r.ref, r.cert_name, r), all = 'To: ' + r.email + '\nSubject: ' + m.subject + '\n\n' + m.body;
+      var ok = function () { b.textContent = 'Copied: paste it into your email'; setTimeout(function () { b.textContent = 'Copy email'; }, 4000); };
+      var old = function () { var ta = document.createElement('textarea'); ta.style.position = 'fixed'; ta.style.opacity = '0'; ta.value = all; document.body.appendChild(ta); ta.select(); var done = false; try { done = document.execCommand('copy'); } catch (e) { done = false; } ta.remove(); if (done) ok(); else window.prompt('Copy this email (Ctrl+C):', all); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(all).then(ok, old); else old();
+    });
+    return b;
+  }
+  function emailButton(to, name, ref, certName, r) {
+    var t = mailText(name, ref, certName, r);
     var q = 'view=cm&fs=1&to=' + encodeURIComponent(to) + '&su=' + encodeURIComponent(t.subject) + '&body=' + encodeURIComponent(t.body);
-    return el('a', { class: 'px-3 py-2 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high', href: 'https://mail.google.com/mail/?' + q, target: '_blank', rel: 'noopener noreferrer', text: 'Email' });
+    return el('a', { class: 'px-3 py-2 rounded bg-surface-container text-primary font-button-text text-button-text hover:bg-surface-container-high', href: 'https://mail.google.com/mail/?' + q, target: '_blank', rel: 'noopener noreferrer', text: 'Open in Gmail' });
   }
   function customersOf(rows) {
     var map = {};
