@@ -12,7 +12,7 @@
  * No cookies, no tracking. IP addresses are never stored: only a salted one-way hash is kept, and a row is deleted as soon as its window (an hour, or a day for an email address) is over.
  */
 
-const ALLOWED_ORIGINS = ['https://conorcparis.github.io', 'https://temp-llxnuoadqiiujerfpvlv.webadorsite.com'];  // the website and the Webador page (temporary Webador address: add the real domain when it has one)
+const ALLOWED_ORIGINS = ['https://conorcparis.github.io', 'https://temp-llxnuoadqiiujerfpvlv.webadorsite.com', 'https://www.theoriginaldublinchristmastrees.ie', 'https://theoriginaldublinchristmastrees.ie'];  // the GitHub site and the Webador site (temporary address + its real domain)
 // localhost is added by the ALLOW_LOCAL variable for local testing only
 const INTERESTS = ['Christmas tree', 'Tree sponsorship', 'Gift certificate'];
 const STATUSES = ['new', 'confirmed', 'paid', 'done', 'cancelled'];
