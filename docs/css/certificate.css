@@ -25,11 +25,12 @@
 .sheet .blank { display: inline-block; border-bottom: .2cqw solid #727973; height: 2.2cqw; }
 .sheet .fine { font-size: 1.15cqw; color: #727973; margin: 1.1cqw 0 0; }
 .sheet .how { font-size: 1.5cqw; color: #424844; margin: 1.2cqw 0 0; }
-/* the astrology certificate: the Celtic wheel (its white background melts into the paper) beside the birth-tree details */
-.sheet .astro-row { display: flex; align-items: center; justify-content: center; gap: 3.5cqw; margin: .6cqw 0 .2cqw; }
-.sheet .astro-row .wheel { height: 27cqw; width: auto; mix-blend-mode: multiply; flex: none; }
-.sheet .astro-row .treebox { max-width: 48cqw; }
-.sheet .astro-row .ogham { font-size: 4.2cqw; line-height: .55; margin: -.6cqw 0 1.4cqw; }
+/* the astrology certificate: the Celtic wheel is the logo at the top (its white background melts into the paper); the tree photo sits in the birth-tree box */
+.sheet .astro-brand .wheel { height: 13cqw; width: auto; mix-blend-mode: multiply; display: block; }
+.sheet .astro-brand { gap: .2cqw; }
+.sheet .astro-brand + h2 { margin-top: .4cqw; }
+.sheet .astro-tree { margin: .6cqw 0 .2cqw; }
+.sheet .astro-tree .ogham { font-size: 3.4cqw; line-height: .55; margin: -.4cqw 0 1.1cqw; }
 .sheet .born { font-size: 1.9cqw; color: #424844; margin: -.6cqw 0 0; }
 .sheet .astro-note { font-size: 1.6cqw; }
 

@@ -9,3 +9,4 @@ worker/.dev.vars
 *.tmp
 worker/.ronan-key.txt
 backups/
+worker/public/

@@ -9,5 +9,7 @@
   "compatibility_date": "2026-10-15",
   "workers_dev": true,
   "preview_urls": false,
+  // The owner tools (admin page + certificate maker), copied from docs/ by build-public.py; /api/* always runs the Worker.
+  "assets": { "directory": "./public", "run_worker_first": ["/api/*"] },
   "d1_databases": [{ "binding": "DB", "database_name": "dublin-trees-orders", "database_id": "9181ad51-954d-49a2-a618-9cbd2a09c98b" }]
 }

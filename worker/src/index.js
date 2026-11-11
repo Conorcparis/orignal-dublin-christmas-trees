@@ -12,7 +12,7 @@
  * No cookies, no tracking. IP addresses are never stored: only a salted one-way hash is kept, and a row is deleted as soon as its window (an hour, or a day for an email address) is over.
  */
 
-const ALLOWED_ORIGINS = ['https://conorcparis.github.io', 'https://temp-llxnuoadqiiujerfpvlv.webadorsite.com', 'https://www.theoriginaldublinchristmastrees.ie', 'https://theoriginaldublinchristmastrees.ie'];  // the GitHub site and the Webador site (temporary address + its real domain)
+const ALLOWED_ORIGINS = ['https://conorcparis.github.io', 'https://temp-llxnuoadqiiujerfpvlv.webadorsite.com', 'https://www.theoriginaldublinchristmastrees.ie', 'https://theoriginaldublinchristmastrees.ie', 'https://dublin-trees-orders.conor-0a0.workers.dev'];   // + the admin page served by this service itself  // the GitHub site and the Webador site (temporary address + its real domain)
 // localhost is added by the ALLOW_LOCAL variable for local testing only
 const INTERESTS = ['Christmas tree', 'Tree sponsorship', 'Gift certificate', 'Celtic astrology certificate'];   // astrology (birth-tree) certificates are a separate kind from sponsorship ones
 const STATUSES = ['new', 'confirmed', 'paid', 'done', 'cancelled'];

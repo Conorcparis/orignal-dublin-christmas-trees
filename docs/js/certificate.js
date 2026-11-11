@@ -40,9 +40,9 @@
       '<p class="trait">Planted and cared for as part of our native woodland restoration</p><p class="dates">One Christmas tree bought, one native tree planted</p></div></div>';
   }
   function astroBlock(t) {
-    return '<div class="astro-row"><img class="wheel" src="images/logo-astro.webp" alt=""><div class="treebox"><div class="treetext">' +
+    return '<div class="treebox cert-tree astro-tree"><img src="' + esc(t.photo) + '" alt="' + esc(t.alt) + '"><div class="treetext">' +
       '<p class="kicker">Birth tree · Celtic tree calendar · Ogham</p><p class="treename">' + esc(t.name) + ' · ' + esc(t.irish) + '</p>' +
-      '<p class="ogham" aria-hidden="true">' + esc(t.ogham) + '</p><p class="trait">' + esc(t.meaning) + '</p><p class="dates">' + esc(t.dates) + '</p></div></div></div>';
+      '<p class="ogham" aria-hidden="true">' + esc(t.ogham) + '</p><p class="trait">' + esc(t.meaning) + '</p><p class="dates">' + esc(t.dates) + '</p></div></div>';
   }
 
   function render() {
@@ -59,11 +59,11 @@
     var message = msg ? '<p class="msg">“' + esc(msg) + '”</p>' : '';
     if (kind === 'astro') {
       var born = field('born');
-      sheet.innerHTML = '<div class="frame"><div class="brand"><span>The Original Dublin Christmas Trees</span></div><h2>Celtic Tree Astrology Certificate</h2><p class="lead">The Celtic birth tree of</p>' +
+      sheet.innerHTML = '<div class="frame"><div class="brand astro-brand"><img class="wheel" src="images/logo-astro.webp" alt=""><span>The Original Dublin Christmas Trees</span></div><h2>Celtic Tree Astrology Certificate</h2><p class="lead">The Celtic birth tree of</p>' +
         '<p class="name">' + (to ? esc(to) : '<span class="blank" style="width:14em"></span>') + '</p>' + (born ? '<p class="born">born ' + esc(born) + '</p>' : '') + (t ? astroBlock(t) : '') +
         (msg ? message : '<p class="msg astro-note">Its symbolic tree stands in our Circle of Life, the Celtic tree astrology circle in the Wicklow Mountains.</p>') +
         '<div class="foot"><div><span>From</span>' + blank(from, '9em') + '</div><div><span>Date</span>' + blank(date, '9em') + '</div><div><span>Certificate no.</span>' + blank(no, '6em') + '</div></div>' +
-        '<p class="fine">The Original Dublin Christmas Trees · ' + EMAIL + '</p></div>';
+        '<p class="fine">The Original Dublin Christmas Trees · ' + EMAIL + '</p>' + credit + '</div>';
     } else if (kind === 'cert') {
       sheet.innerHTML = '<div class="frame">' + brand + '<h2>Certificate of Sponsorship</h2><p class="lead">A native Irish tree has been planted in the Wicklow Mountains in honour of</p>' +
         '<p class="name">' + (to ? esc(to) : '<span class="blank" style="width:14em"></span>') + '</p>' + (t ? treeBlock(t, 'cert-tree') : '') + message +
