@@ -3,7 +3,7 @@
  *
  *   POST   /api/reservations            public, from the website only: validates and stores a reservation, returns its reference
  *   GET    /api/admin/reservations      owner: list (?status=&q=), newest 500
- *   PATCH  /api/admin/reservations/:ref owner: change status or notes, or mark the payment received ({ paid: true | false, paid_eur? })
+ *   PATCH  /api/admin/reservations/:ref owner: change status or notes; payment { paid: true | 'free' | false, paid_eur? }; { cert_sent: true | false }
  *   DELETE /api/admin/reservations/:ref owner: erase one reservation (data-protection requests)
  *   POST   /api/admin/import            owner: paste an order email, it becomes an order with a unique certificate code
  *   GET    /api/admin/export.csv        owner: everything as CSV
@@ -16,7 +16,7 @@ const ALLOWED_ORIGINS = ['https://conorcparis.github.io', 'https://temp-llxnuoad
 // localhost is added by the ALLOW_LOCAL variable for local testing only
 const INTERESTS = ['Christmas tree', 'Tree sponsorship', 'Gift certificate', 'Celtic astrology certificate'];   // astrology (birth-tree) certificates are a separate kind from sponsorship ones
 const STATUSES = ['new', 'confirmed', 'paid', 'done', 'cancelled'];
-// Payment: 15 euro per certificate (sponsorship, gift or Celtic astrology). A Christmas tree on its own has no certificate price here.
+// Payment: 15 euro per certificate (sponsorship, gift or Celtic astrology). A sponsorship that comes with a Christmas tree is free: the owner marks it 'free'.
 const PRICE_EUR = 15, CERT_KINDS = ['Tree sponsorship', 'Gift certificate', 'Celtic astrology certificate'];
 const dueEur = (interests) => PRICE_EUR * CERT_KINDS.filter((k) => String(interests || '').includes(k)).length;
 const withDue = (r) => ({ ...r, due_eur: dueEur(r.interests) });
@@ -203,7 +203,7 @@ async function handleAdmin(request, env, url, cors) {
     const where = [], args = [];
     if (STATUSES.includes(status)) { where.push('status = ?'); args.push(status); }
     if (q) { where.push('(lower(name) LIKE ? OR lower(email) LIKE ? OR lower(ref) LIKE ? OR lower(cert_name) LIKE ?)'); const like = '%' + q.replace(/[%_]/g, '') + '%'; args.push(like, like, like, like); }
-    const rows = await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes, paid_eur, paid_at FROM reservations' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY created_at DESC LIMIT 500').bind(...args).all();
+    const rows = await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes, paid_eur, paid_at, cert_sent_at FROM reservations' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY created_at DESC LIMIT 500').bind(...args).all();
     return json({ ok: true, price_eur: PRICE_EUR, reservations: (rows.results || []).map(withDue) }, 200, nostore);
   }
   if (path === '/api/admin/import' && request.method === 'POST') {
@@ -227,8 +227,8 @@ async function handleAdmin(request, env, url, cors) {
     return json({ ok: false, error: 'server' }, 500, nostore);
   }
   if (path === '/api/admin/export.csv' && request.method === 'GET') {
-    const rows = ((await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes, paid_eur, paid_at FROM reservations ORDER BY created_at DESC').all()).results || []).map(withDue);
-    const head = ['ref', 'created_at', 'name', 'email', 'interests', 'tree', 'area', 'cert_name', 'cert_from', 'cert_message', 'status', 'notes', 'due_eur', 'paid_eur', 'paid_at'];
+    const rows = ((await env.DB.prepare('SELECT ref, created_at, name, email, interests, tree, area, cert_name, cert_from, cert_message, status, notes, paid_eur, paid_at, cert_sent_at FROM reservations ORDER BY created_at DESC').all()).results || []).map(withDue);
+    const head = ['ref', 'created_at', 'name', 'email', 'interests', 'tree', 'area', 'cert_name', 'cert_from', 'cert_message', 'status', 'notes', 'due_eur', 'paid_eur', 'paid_at', 'cert_sent_at'];
     const csv = [head.join(','), ...rows.map((r) => head.map((k) => csvCell(r[k])).join(','))].join('\r\n') + '\r\n';
     return new Response(csv, { status: 200, headers: { ...nostore, 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="reservations.csv"', 'X-Content-Type-Options': 'nosniff' } });
   }
@@ -238,13 +238,19 @@ async function handleAdmin(request, env, url, cors) {
     if (b && b.status !== undefined) { if (!STATUSES.includes(b.status)) return json({ ok: false, error: 'bad_status' }, 400, nostore); sets.push('status = ?'); args.push(b.status); }
     if (b && b.notes !== undefined) { sets.push('notes = ?'); args.push(cleanMultiline(b.notes, LIMITS.notes)); }
     if (b && b.paid !== undefined) {
-      // paid: true marks the payment received (the amount given, or 15 per certificate on the order); paid: false undoes it
-      let amount = 0;
-      if (b.paid === true) {
+      // paid: true marks the payment received (the amount given, or 15 per certificate on the order); 'free' settles it at 0 (sponsorship with a Christmas tree); false undoes it
+      let amount = 0, settled = false;
+      if (b.paid === 'free') settled = true;
+      else if (b.paid === true) {
+        settled = true;
         if (b.paid_eur !== undefined) { amount = Number(b.paid_eur); if (!Number.isInteger(amount) || amount < 1 || amount > 10000) return json({ ok: false, error: 'bad_amount' }, 400, nostore); }
         else { const row = await env.DB.prepare('SELECT interests FROM reservations WHERE ref = ?').bind(m[1]).first(); if (!row) return json({ ok: false, error: 'not_found' }, 404, nostore); amount = dueEur(row.interests) || PRICE_EUR; }
       } else if (b.paid !== false) return json({ ok: false, error: 'bad_paid' }, 400, nostore);
-      sets.push('paid_eur = ?', 'paid_at = ?'); args.push(amount, amount ? new Date().toISOString() : '');
+      sets.push('paid_eur = ?', 'paid_at = ?'); args.push(amount, settled ? new Date().toISOString() : '');
+    }
+    if (b && b.cert_sent !== undefined) {
+      if (b.cert_sent !== true && b.cert_sent !== false) return json({ ok: false, error: 'bad_cert_sent' }, 400, nostore);
+      sets.push('cert_sent_at = ?'); args.push(b.cert_sent ? new Date().toISOString() : '');
     }
     if (!sets.length) return json({ ok: false, error: 'nothing_to_change' }, 400, nostore);
     const r = await env.DB.prepare('UPDATE reservations SET ' + sets.join(', ') + ' WHERE ref = ?').bind(...args, m[1]).run();

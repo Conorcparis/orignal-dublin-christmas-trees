@@ -10,7 +10,7 @@ OUT = os.path.join(HERE, 'public')
 SITE = 'https://www.theoriginaldublinchristmastrees.ie/'
 FILES = ['admin.html', 'certificates.html', 'favicon.ico',
          'css/fonts.css', 'css/site.css', 'css/certificate.css', 'css/admin.css',
-         'js/admin.js', 'js/certificate.js', 'js/config.js',
+         'js/admin.js', 'js/certificate.js', 'js/config.js', 'js/vendor/html-to-image-1.11.11.js', 'js/vendor/jspdf-2.5.2.umd.min.js', 'js/vendor/LICENSES.txt',
          'images/apple-touch-icon.png', 'images/favicon-32.png', 'images/logo-128.png', 'images/logo-512.png', 'images/logo-astro.webp']
 DIRS = ['fonts', 'images/trees']
 

@@ -90,6 +90,27 @@
     set('amount', q.get('amount')); set('to', q.get('to')); set('from', q.get('from')); set('msg', q.get('msg')); set('no', q.get('no')); set('born', q.get('born'));
   })();
   form.addEventListener('input', render); form.addEventListener('change', render);
+  // Download PDF: the sheet is drawn as a picture at print size and placed on a landscape A4 page (A5 for a gift card).
+  // No print window, so nothing prints around it and the page cannot come out the wrong way round.
+  $('#btn-pdf').addEventListener('click', function () {
+    var btn = this, label = btn.textContent;
+    if (!window.htmlToImage || !window.jspdf) { alert('The PDF maker did not load. Use Print and choose Save as PDF.'); return; }
+    var gift = mode() === 'gift', pxW = gift ? 1240 : 1754, mmW = gift ? 210 : 297, mmH = gift ? 148 : 210;
+    var who = (field('to') || 'certificate').replace(/[^A-Za-z0-9\u00C0-\u017F]+/g, '-').replace(/^-|-$/g, '');
+    var name = [field('no'), mode() === 'gift' ? 'Gift-card' : mode() === 'astro' ? 'Astrology-certificate' : 'Certificate', who].filter(Boolean).join('-') + '.pdf';
+    btn.disabled = true; btn.textContent = 'Making the PDF\u2026';
+    var old = sheet.style.width; sheet.style.width = pxW + 'px';
+    var ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+    ready.then(function () { return window.htmlToImage.toJpeg(sheet, { quality: 0.95, pixelRatio: 2, backgroundColor: '#fffdf6', cacheBust: false }); })
+      .then(function (img) {
+        var pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: gift ? 'a5' : 'a4' });
+        pdf.addImage(img, 'JPEG', 0, 0, mmW, mmH);
+        pdf.setProperties({ title: name.replace(/\.pdf$/, '').replace(/-/g, ' '), creator: 'The Original Dublin Christmas Trees' });
+        pdf.save(name);
+      })
+      .catch(function () { alert('Could not make the PDF here. Use Print and choose Save as PDF.'); })
+      .then(function () { sheet.style.width = old; btn.disabled = false; btn.textContent = label; });
+  });
   $('#btn-print').addEventListener('click', function () {
     var who = field('to') || 'recipient', old = document.title;
     document.title = (mode() === 'gift' ? 'Gift card' : mode() === 'astro' ? 'Astrology certificate' : 'Certificate') + ' - ' + who;     // becomes the suggested PDF file name

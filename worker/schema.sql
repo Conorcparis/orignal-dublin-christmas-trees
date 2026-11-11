@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS reservations (
   status       TEXT NOT NULL DEFAULT 'new',          -- new, confirmed, paid, done, cancelled
   notes        TEXT NOT NULL DEFAULT '',             -- the owner's private notes
   paid_eur     INTEGER NOT NULL DEFAULT 0,           -- payment received, in euro (15 per certificate); 0 = not paid yet
-  paid_at      TEXT NOT NULL DEFAULT '',             -- when the payment was marked received (ISO time), '' = not paid
+  paid_at      TEXT NOT NULL DEFAULT '',             -- when the payment was settled (ISO time), '' = not yet; paid_eur 0 + a time = free with a Christmas tree
+  cert_sent_at TEXT NOT NULL DEFAULT '',             -- when the certificate was emailed to the customer, '' = not yet
   consent_at   TEXT NOT NULL                         -- when the customer ticked the consent box
 );
 CREATE INDEX IF NOT EXISTS idx_reservations_created ON reservations(created_at DESC);

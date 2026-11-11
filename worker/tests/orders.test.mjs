@@ -241,5 +241,22 @@ test('payment received: 15 euro per certificate, marked and undone by the owner,
   assert.equal(byRef(list, one.ref).paid_eur, 0); assert.equal(byRef(list, one.ref).paid_at, '');
   assert.equal((await admin(env, '/api/admin/reservations/R-NOPE00', { method: 'PATCH', body: { paid: true } })).status, 404);
   const csv = await (await admin(env, '/api/admin/export.csv')).text();
-  assert.ok(csv.split('\r\n')[0].endsWith('due_eur,paid_eur,paid_at'));
+  assert.ok(csv.split('\r\n')[0].endsWith('due_eur,paid_eur,paid_at,cert_sent_at'));
+});
+
+test('a sponsorship with a Christmas tree is settled free; the certificate is stamped sent', async () => {
+  const env = mkEnv();
+  const o = await (await post(env, { ...GOOD, interests: ['Tree sponsorship'], cert_name: 'Mam' })).json();
+  const get = async () => (await (await admin(env, '/api/admin/reservations')).json()).reservations.find((r) => r.ref === o.ref);
+  assert.equal((await get()).due_eur, 15);
+  assert.equal((await admin(env, '/api/admin/reservations/' + o.ref, { method: 'PATCH', body: { paid: 'free' } })).status, 200);
+  let r = await get(); assert.equal(r.paid_eur, 0); assert.ok(r.paid_at, 'free is settled: it has a date');
+  assert.equal((await admin(env, '/api/admin/reservations/' + o.ref, { method: 'PATCH', body: { paid: false } })).status, 200);
+  r = await get(); assert.equal(r.paid_at, '');
+  assert.equal((await admin(env, '/api/admin/reservations/' + o.ref, { method: 'PATCH', body: { cert_sent: true } })).status, 200);
+  assert.ok((await get()).cert_sent_at);
+  assert.equal((await admin(env, '/api/admin/reservations/' + o.ref, { method: 'PATCH', body: { cert_sent: 'yes' } })).status, 400);
+  assert.equal((await admin(env, '/api/admin/reservations/' + o.ref, { method: 'PATCH', body: { cert_sent: false } })).status, 200);
+  assert.equal((await get()).cert_sent_at, '');
+  assert.ok((await (await admin(env, '/api/admin/export.csv')).text()).split('\r\n')[0].endsWith(',cert_sent_at'));
 });

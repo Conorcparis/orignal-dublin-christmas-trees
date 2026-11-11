@@ -69,7 +69,7 @@
   function card(r) {
     var k = KINDS[kindOf(r)], tb = splitTree(r.tree);
     var sel = el('select', { class: 'h-10 px-2 rounded bg-surface-container border border-outline-variant/40', 'aria-label': 'Status of ' + r.ref });
-    STATUSES.forEach(function (s) { var o = el('option', { value: s, text: s[0].toUpperCase() + s.slice(1) }); if (s === r.status) o.selected = true; sel.appendChild(o); });
+    STATUSES.forEach(function (s) { if (s === 'paid' && r.status !== 'paid') return; var o = el('option', { value: s, text: s[0].toUpperCase() + s.slice(1) }); if (s === r.status) o.selected = true; sel.appendChild(o); });
     var notes = el('textarea', { class: 'w-full px-3 py-2 rounded bg-surface-container text-on-surface font-body-sm', rows: '2', maxlength: '1000', placeholder: 'Private notes (paid by transfer, delivery slot…)', 'aria-label': 'Notes for ' + r.ref });
     notes.value = r.notes || '';
     var state = el('span', { class: 'font-label-mono-xs text-label-mono-xs text-secondary', role: 'status' });
@@ -85,28 +85,66 @@
       if (!confirm('Erase ' + r.ref + ' (' + r.name + ') for good? This cannot be undone.')) return;
       api('/api/admin/reservations/' + encodeURIComponent(r.ref), { method: 'DELETE' }).then(function (res) { if (res.ok) load(); else $('#msg').textContent = fail(res); });
     });
-    var buttons = [];
-    if (r.cert_name && k.cert) buttons.push(el('a', { class: 'px-3 py-2 rounded bg-tertiary-container text-on-tertiary font-button-text text-button-text hover:bg-tertiary', href: certLink(r, k.cert), text: k.button }));
-    buttons.push(copyButton(r)); buttons.push(emailButton(r.email, r.name, r.ref, r.cert_name, r));
-    // Payment received: 15 euro per certificate. One click marks it received (with today's date); Undo clears it.
-    var due = +r.due_eur || 0, paid = +r.paid_eur || 0, payBox = null;
-    if (due || paid) {
-      var payText = el('span', { class: 'font-body-sm text-body-sm font-semibold ' + (paid ? 'text-secondary' : 'text-error') });
-      var payBtn = el('button', { type: 'button', class: 'px-3 py-2 rounded font-button-text text-button-text ' + (paid ? 'bg-surface-container text-primary hover:bg-surface-container-high' : 'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed') });
-      var drawPay = function () {
-        payText.textContent = paid ? 'Payment received: \u20AC' + paid + (r.paid_at ? ' on ' + fmt(r.paid_at) : '') : 'Payment due: \u20AC' + due + ' (not received yet)';
-        payBtn.textContent = paid ? 'Undo payment' : 'Mark \u20AC' + due + ' received';
-        payText.className = 'font-body-sm text-body-sm font-semibold ' + (paid ? 'text-secondary' : 'text-error');
-      };
-      payBtn.addEventListener('click', function () {
-        var want = !paid; state.textContent = 'Saving\u2026';
-        api('/api/admin/reservations/' + encodeURIComponent(r.ref), { method: 'PATCH', body: { paid: want } }).then(function (res) {
-          if (!res.ok) { state.textContent = fail(res); return; }
-          state.textContent = 'Saved'; paid = want ? due || 15 : 0; r.paid_eur = paid; r.paid_at = want ? new Date().toISOString() : ''; drawPay(); totals();
-        }, function () { state.textContent = 'Could not save'; });
-      });
-      drawPay();
-      payBox = el('div', { class: 'flex flex-wrap items-center gap-3 p-3 rounded bg-surface-container-low' }, [el('span', { class: 'font-label-mono-xs text-label-mono-xs text-on-surface-variant uppercase', text: 'Payment' }), payText, payBtn]);
+    // ---- The four steps: 1 payment, 2 certificate (then Download PDF there), 3 email it, 4 mark it sent ----
+    var BTN = 'px-3 py-2 rounded font-button-text text-button-text ';
+    var due = +r.due_eur || 0;
+    var settled = function () { return !!r.paid_at; };
+    var patch = function (body, after) {
+      state.textContent = 'Saving…';
+      api('/api/admin/reservations/' + encodeURIComponent(r.ref), { method: 'PATCH', body: body }).then(function (res) {
+        if (!res.ok) { state.textContent = fail(res); return; }
+        state.textContent = 'Saved'; after(); draw(); totals();
+      }, function () { state.textContent = 'Could not save'; });
+    };
+    var step = function (n, title) { return el('div', { class: 'step' }, [el('span', { class: 'step-n', text: String(n) }), el('span', { class: 'step-t', text: title })]); };
+    var s1 = el('div', { class: 'step-body' }), s2 = el('div', { class: 'step-body' }), s3 = el('div', { class: 'step-body' }), s4 = el('div', { class: 'step-body' });
+    var stepsBox = null;
+    function draw() {
+      [s1, s2, s3, s4].forEach(function (s) { s.textContent = ''; });
+      // 1 payment
+      if (!due) s1.appendChild(el('span', { class: 'ok', text: 'No payment for this order' }));
+      else if (!settled()) {
+        s1.appendChild(el('span', { class: 'todo', text: '€' + due + ' due, not received yet' }));
+        var paidBtn = el('button', { type: 'button', class: BTN + 'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed', text: 'Mark €' + due + ' received' });
+        paidBtn.addEventListener('click', function () { patch({ paid: true }, function () { r.paid_eur = due; r.paid_at = new Date().toISOString(); }); });
+        s1.appendChild(paidBtn);
+        if (kindOf(r) === 'sponsor') {
+          var freeBtn = el('button', { type: 'button', class: BTN + 'bg-surface-container text-primary hover:bg-surface-container-high', text: 'Free with a Christmas tree' });
+          freeBtn.addEventListener('click', function () { patch({ paid: 'free' }, function () { r.paid_eur = 0; r.paid_at = new Date().toISOString(); }); });
+          s1.appendChild(freeBtn);
+        }
+      } else {
+        s1.appendChild(el('span', { class: 'ok', text: (+r.paid_eur ? 'Paid €' + r.paid_eur : 'Free with a Christmas tree') + ' · ' + fmt(r.paid_at) }));
+        var undo = el('button', { type: 'button', class: BTN + 'text-primary underline', text: 'Undo' });
+        undo.addEventListener('click', function () { patch({ paid: false }, function () { r.paid_eur = 0; r.paid_at = ''; }); });
+        s1.appendChild(undo);
+      }
+      // 2 certificate: opens filled in; Download PDF is on that page
+      var ready = !due || settled();
+      if (ready) {
+        s2.appendChild(el('a', { class: BTN + 'bg-tertiary-container text-on-tertiary hover:bg-tertiary', href: certLink(r, k.cert), target: '_blank', rel: 'noopener', text: 'Open ' + k.button.toLowerCase() }));
+        s2.appendChild(el('span', { class: 'hint', text: 'check it, then press Download PDF' }));
+      } else s2.appendChild(el('span', { class: 'hint', text: 'Opens once the payment is marked (step 1).' }));
+      // 3 email
+      s3.appendChild(copyButton(r)); s3.appendChild(emailButton(r.email, r.name, r.ref, r.cert_name, r));
+      s3.appendChild(el('span', { class: 'hint', text: 'paste it, attach the PDF, send' }));
+      // 4 sent
+      if (r.cert_sent_at) {
+        s4.appendChild(el('span', { class: 'ok', text: 'Certificate sent · ' + fmt(r.cert_sent_at) }));
+        var unsent = el('button', { type: 'button', class: BTN + 'text-primary underline', text: 'Undo' });
+        unsent.addEventListener('click', function () { patch({ cert_sent: false }, function () { r.cert_sent_at = ''; }); });
+        s4.appendChild(unsent);
+      } else {
+        var sent = el('button', { type: 'button', class: BTN + 'bg-surface-container text-primary hover:bg-surface-container-high', text: 'Mark certificate sent' });
+        sent.addEventListener('click', function () { patch({ cert_sent: true }, function () { r.cert_sent_at = new Date().toISOString(); }); });
+        s4.appendChild(sent);
+      }
+      if (stepsBox) stepsBox.classList.toggle('all-done', !!r.cert_sent_at);
+    }
+    if (r.cert_name && k.cert) {
+      draw();
+      stepsBox = el('div', { class: 'steps' + (r.cert_sent_at ? ' all-done' : '') }, [
+        step(1, 'Payment'), s1, step(2, 'Certificate'), s2, step(3, 'Email'), s3, step(4, 'Sent'), s4]);
     }
     var mail = el('a', { class: 'underline text-primary', href: 'mailto:' + encodeURIComponent(r.email).replace('%40', '@'), text: r.email });
     return el('li', { class: 'bg-surface-container-lowest rounded-lg shadow-sm p-5 flex flex-col gap-2' }, [
@@ -118,15 +156,15 @@
       kindOf(r) === 'tree' || /,/.test(r.interests || '') ? line('Ordered', r.interests) : null,
       line(kindOf(r) === 'astro' ? 'Birth tree' : 'Tree', tb.tree), line('Born', tb.born), line('Area', r.area),
       line('Name on certificate', r.cert_name), line('From', r.cert_from), line('Message', r.cert_message),
-      payBox, notes,
-      el('div', { class: 'flex flex-wrap items-center gap-2' }, buttons.concat([saveNotes, del]))]);
+      stepsBox, notes,
+      el('div', { class: 'flex flex-wrap items-center gap-2' }, [saveNotes, del])]);
   }
 
   // Money: received and still due (15 euro per certificate), for the orders shown.
   function totals() {
     var box = $('#money'); if (!box) { box = el('p', { id: 'money', class: 'font-body-md text-body-md font-semibold text-primary' }); $('#summary').insertAdjacentElement('afterend', box); }
     var got = 0, owed = 0, open = 0;
-    all.forEach(function (x) { if (x.status === 'cancelled') return; var due = +x.due_eur || 0, paid = +x.paid_eur || 0; got += paid; if (due && !paid) { owed += due; open++; } });
+    all.forEach(function (x) { if (x.status === 'cancelled') return; var due = +x.due_eur || 0, paid = +x.paid_eur || 0; got += paid; if (due && !x.paid_at) { owed += due; open++; } });
     box.textContent = all.length ? 'Payments received: \u20AC' + got + ' \u00b7 still due: \u20AC' + owed + ' (' + open + ' order' + (open === 1 ? '' : 's') + ')' : '';
   }
 
@@ -158,7 +196,7 @@
     var what = { astro: 'Celtic astrology certificate', gift: 'gift certificate', sponsor: 'tree sponsorship certificate' }[kind];
     var paid = +r.paid_eur || 0;
     var lines = ['Hi ' + first + ',', '',
-      (paid ? 'Thank you, we have received your payment of \u20AC' + paid + '. ' : 'Thank you for your order. ') + 'Your ' + what + (certName ? ' for ' + certName : '') + ' is attached.'];
+      (paid ? 'Thank you, we have received your payment of \u20AC' + paid + '. ' : r.paid_at && kind === 'sponsor' ? 'Thank you for buying your Christmas tree with us. ' : 'Thank you for your order. ') + 'Your ' + what + (certName ? ' for ' + certName : '') + (r.paid_at && !paid && kind === 'sponsor' ? ', free with your Christmas tree,' : '') + ' is attached.'];
     if (kind === 'astro') lines.push('', 'It shows the Celtic birth tree' + (tree ? ', ' + tree : '') + ', with its Ogham sign and meaning. Its symbolic tree stands in our Circle of Life, the Celtic tree astrology circle in the Wicklow Mountains.');
     else lines.push('', 'A native Irish tree' + (tree && !/not sure/i.test(tree) ? ' (' + tree + ')' : '') + ' is planted in your name in our woodland in the Wicklow Mountains, and cared for as part of our native woodland restoration.');
     if (ref) lines.push('', 'Your certificate number is ' + ref + '. Keep it: it is how we find your tree.');
